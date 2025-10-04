@@ -24,7 +24,7 @@
 
 ## Sequence Diagram
 
-![Sequence Diagram](sequence-diagram.png){ width=500 }
+![Sequence Diagram](sequence-diagram.png)
 
 ## Appendix
 ### Currencies in Scope*
