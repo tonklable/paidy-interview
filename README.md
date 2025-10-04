@@ -3,7 +3,7 @@
 ## Functional Requirements (Assumptions Included)
 > The service returns an exchange rate when provided with 2 supported currencies
 1. Users can **call the endpoint `/rates`** with `from` and `to` to receive an exchange rate.
-2. Users receive a **rounded** exchange rate with **4 decimal digits** or **4 significant digits if the rate is less than 0.1**.
+2. Users receive a **rounded** exchange rate with **4 decimal digits if the rate is more than or equal to 0.1000** or **4 significant digits if the rate is less than 0.1000**.
 3. Users receive an exchange rate only for currencies in scope (See **Appendix** for Currencies in Scope).
 > The rate should not be older than 5 minutes.
 4. The rate should **not be older than 5 minutes**.
