@@ -1,50 +1,41 @@
-<img src="/paidy.png?raw=true" width=300 style="background-color:white;">
+# Paidy Take-Home Coding Exercises (Forex)
 
-# Paidy Take-Home Coding Exercises
+## Functional Requirements (Assumptions Included)
+> The service returns an exchange rate when provided with 2 supported currencies
+1. Users can **call the endpoint `/rates`** with `from` and `to` to receive an exchange rate.
+2. Users receive a **rounded** exchange rate with **4 decimal digits** or **4 significant digits if the rate is less than 0.1**.
+3. Users receive an exchange rate only for currencies in scope (See **Appendix** for Currencies in Scope).
+> The rate should not be older than 5 minutes.
+4. The rate should **not be older than 5 minutes**.
+> The service should support at least 10,000 successful requests per day **with 1 API token**.
 
-## What to expect?
-We understand that your time is valuable, and in anyone's busy schedule solving these exercises may constitute a fairly substantial chunk of time, so we really appreciate any effort you put in to helping us build a solid team.
+5. The service **verifies the user token** and gives a successful response only to requests with a verified token.
+6. The service returns the error message and HTTP status code for the corresponding error cases (See **Appendix** for Error Responses).
 
-## What we are looking for?
-**Keep it simple**. Read the requirements and restrictions carefully and focus on solving the problem.
+## Non-functional Requirements (Assumptions Included)
+1. Users can receive a response in real time with **latency less than 500 ms** when testing locally.
+> The service should support **at least 10,000 successful requests per day** with 1 API token.
+2. The service supports **at least 10,000 successful requests per day**.
+3. The service has a **local cache/database to save currency values**, so it does not call the One-Frame API for every request it receives (Can call One-Frame API only 1000 times per day).
+4. The service has **unit tests** for successful cases (for an exchange rate greater than and less than 0.1) and error cases.
+5. The service provides **OpenAPI documentation** on the endpoint `/docs`.
+6. The service must **store user tokens and the One-Frame API token only in secure storage** with encryption in production.
+7. The service should be able to handle maximum 2 requests concurrently.
 
-**Treat it like production code**. That is, develop your software in the same way that you would for any code that is intended to be deployed to production. These may be toy exercises, but we really would like to get an idea of how you build code on a day-to-day basis.
+## Sequence Diagram
 
-## How to submit?
-Please upload your solution to a version control system hosting service, preferably [Github](https://www.github.com) or [Gitlab](https://www.gitlab.com), that allows code viewing and checkout without requiring an account. Afterward, email us a link to the branch that contains your solution. Make sure your submission includes a small **README**, documenting any assumptions, simplifications and/or choices you made, as well as a short description of how to run the code and/or tests. Finally, to help us review your code, please split your commit history in sensible chunks (at least separate the initial provided code from your personal additions).
+![Sequence Diagram](sequence-diagram.png){ width=500 }
 
-## The Interview:
-After you submit your code, we will contact you to discuss and potentially arrange an in-person interview with some of the team.
-The interview will cover a wide range of technical and social aspects relevant to working at Paidy, but importantly for this exercise: we will also take the opportunity to step through your submitted code with you.
+## Appendix
+### Currencies in Scope*
+AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, BMD, BND, BOB, BRL, BSD, BTN, BWP, BYN, BZD, CAD, CDF, CHF, CLP, CNY, COP, CRC, CUC, CUP, CVE, CZK, DJF, DKK, DOP, DZD, EGP, ERN, ETB, EUR, FJD, FKP, GBP, GEL, GGP, GHS, GIP, GMD, GNF, GTQ, GYD, HKD, HNL, HRK, HTG, HUF, IDR, ILS, IMP, INR, IQD, IRR, ISK, JEP, JMD, JOD, JPY, KES, KGS, KHR, KMF, KPW, KRW, KWD, KYD, KZT, LAK, LBP, LKR, LRD, LSL, LYD, MAD, MDL, MGA, MKD, MMK, MNT, MOP, MRU, MUR, MVR, MWK, MXN, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PGK, PHP, PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SBD, SCR, SDG, SEK, SGD, SHP, SLL, SOS, SPL, SRD, STN, SVC, SYP, SZL, THB, TJS, TMT, TND, TOP, TRY, TTD, TVD, TWD, TZS, UAH, UGX, USD, UYU, UZS, VEF, VND, VUV, WST, XAF, XCD, XDR, XOF, XPF, YER, ZAR, ZMW, ZWD
 
-## The Exercises:
-### 1. [Platform] Build an API for managing users
-The complete specification for this exercise can be found in the [UsersAPI.md](UsersAPI.md).
+*Same as One-Frame API.
 
-### 2. [Frontend] Build a SPA that displays currency exchange rates
-The complete specification for this exercise can be found in the [Forex-UI.md](Forex-UI.md).
-
-### 3. [Platform] Build a local proxy for currency exchange rates
-The complete specification for this exercise can be found in the [Forex.md](Forex.md).
-
-### 4. [Platform] Build an API for managing a restaurant
-The complete specification for this exercise can be found at [SimpleRestaurantApi.md](SimpleRestaurantApi.md)
-
-### 5. [Technical Product Manager] Choose an address validation provider and write the project requirements
-The complete specification for this exercise can be found at [AddressValidation.md](./AddressValidation.md)
-
-## F.A.Q.
-1) _Should I work on all exercises ?_
-*NO*, the hiring manager will ask you to work on a single exercise and will link you directly to that exercise's readme file. If you are unsure about which exercise to work on, then please contact Paidy's talent acquisition team.
-
-2) _Is it OK to share your solutions publicly?_
-Yes, the questions are not prescriptive, the process and discussion around the code is the valuable part. You do the work, you own the code. Given we are asking you to give up your time, it is entirely reasonable for you to keep and use your solution as you see fit.
-
-3) _Should I do X?_
-For any value of X, it is up to you, we intentionally leave the problem a little open-ended and will leave it up to you to provide us with what you see as important. Just remember to keep it simple. If it's a feature that is going to take you a couple of days, it's not essential.
-
-4) _Something is ambiguous, and I don't know what to do?_
-The first thing is: don't get stuck. We really don't want to trip you up intentionally, we are just attempting to see how you approach problems. That said, there are intentional ambiguities in the specifications, mainly to see how you fill in those gaps, and how you make design choices.
-If you really feel stuck, our first preference is for you to make a decision and document it with your submission - in this case there is really no wrong answer. If you feel it is not possible to do this, just send us an email and we will try to clarify or correct the question for you.
-
-Good luck!
+### Error Responses
+| Error case | HTTP status code | Message |
+|---|---|---|
+| Token not provided, token verification failed | 401 Unauthorized | Token verification failed. Please provide the correct token. |
+| Invalid request, insufficient parameters, currency out of scope | 400 Bad Request | Invalid request. 
+| Unable to connect to the One-Frame Service when there is no saved data | 503 Service Unavailable | Unable to reach external rate service. Please try again later. |
+| Other unexpected errors while processing requests | 500 Internal Server Error | Internal error. Please contact the developer. |
