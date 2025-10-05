@@ -68,3 +68,20 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 #### Maximum times of cache clearing per day (every 5 minutes)
 ```math
 \frac{\text{seconds in one day}}{\text{seconds to clear cache}} = \frac{86400\ \text{seconds}}{300\ \text{seconds per time}} = 288\ \text{times}
+```
+Redis clears cache every 5 minutes. There are maximum 288 times for the service to call One-Frame API.
+#### Maximum concurrency to call Once Frame API 
+
+```math
+\frac{\text{One Frame API limit}}{\text{Times to call API}} = \frac{1000\ \text{requests}}{288\ \text{times}} ≈  3\ \text{requests per time}
+```
+
+Service can receive **maximum 3 requests concurrently**
+#### Maximum QPS
+
+```math
+\text{QPS} = \frac{\text{Concurrency}}{\text{Latency}} = \frac{3}{0.5\ \text{second}} = 6
+```
+
+Service can receive **maximum 6 QPS**
+If actual latency is lower than 500 ms, **QPS will proportionally increase.**
