@@ -3,28 +3,52 @@
 ## Functional Requirements (Assumptions Included)
 > The service returns an exchange rate when provided with 2 supported currencies
 1. Users can **call the endpoint `/rates`** with `from` and `to` to receive an exchange rate.
-2. Users receive a **rounded** exchange rate with **4 decimal digits if the rate is more than or equal to 0.1000** or **4 significant digits if the rate is less than 0.1000**.
-3. Users receive an exchange rate only for currencies in scope (See **Appendix** for Currencies in Scope).
+2. Users receive a **rounded** exchange rate with **4 decimal digits if the rate is greater than or equal to 0.1000** or **4 significant digits if the rate is less than 0.1000**.
+3. Users receive an exchange rate only for currencies in scope (see **Appendix** for Currencies in Scope).
+4. All exchange rates are equally available to users; **no currency pair has higher priority or peak usage.**
 > The rate should not be older than 5 minutes.
 4. The rate should **not be older than 5 minutes**.
 > The service should support at least 10,000 successful requests per day **with 1 API token**.
 
-5. The service **verifies the user token** and gives a successful response only to requests with a verified token.
-6. The service returns the error message and HTTP status code for the corresponding error cases (See **Appendix** for Error Responses).
+5. The service **verifies the user token** and returns a successful response only for requests with a verified token.
+6. The service returns the error message and HTTP status code for the corresponding error cases (see **Appendix** for Error Responses).
 
 ## Non-functional Requirements (Assumptions Included)
-1. Users can receive a response in real time with **latency less than 500 ms** when testing locally.
+1. Users can receive a response in real time with **latency less than 500 ms** when testing locally. We assume that all users are in Japan.
 > The service should support **at least 10,000 successful requests per day** with 1 API token.
 2. The service supports **at least 10,000 successful requests per day**.
-3. The service has a **local cache/database to save currency values**, so it does not call the One-Frame API for every request it receives (Can call One-Frame API only 1000 times per day).
+3. The service can call **One-Frame API only 1000 times** per day. There is no limitation on the request length or response size of the One-Frame API.
 4. The service has **unit tests** for successful cases (for an exchange rate greater than and less than 0.1) and error cases.
-5. The service provides **OpenAPI documentation** on the endpoint `/docs`.
-6. The service must **store user tokens and the One-Frame API token only in secure storage** with encryption in production.
-7. The service should be able to handle maximum 2 requests concurrently.
+5. The service must **store user tokens and the One-Frame API token only in secure storage** with encryption in production.
+6. The service should be able to handle **a maximum of 3 requests concurrently** (under 6 QPS).
 
 ## Sequence Diagram
 
 ![Sequence Diagram](sequence-diagram.png)
+
+## Implementation Details
+1. Forex-mtl fetches URLs, configurations, user token, and One-Frame token from .env at startup.
+2. When receiving a request, forex-mtl verifies the user token. Forex-mtl returns `401 Unauthorized error` if the token is not verified or does not exist.
+3. Forex-mtl verifies the request. The `from` and `to` parameters must be present, and both currencies should be in scope. If not, it returns `400 Bad Request`.
+4. Forex-mtl implements caching with Redis, refreshing every 300 seconds.
+5. When there is no cache in Redis:  
+    * Forex-mtl calls the One-Frame API with 165 pairs to get all currencies against USD.
+    * If forex-mtl cannot call the One-Frame API within 300 ms, it returns `503 Service Unavailable`.
+    * Then, forex-mtl sets the cache in Redis with the key `rates` and the value for the response.
+    * Concurrent updates for Redis are acceptable, and only the last update is saved ("last write wins").
+    * Remark: Estimated response size ≈ 23 KB.
+6. When there is a cache in Redis:
+    * Forex-mtl gets all currency rates against USD from Redis.
+7. Forex-mtl calculates exchange rates.  
+For example, `USD to JPY = R1`, `USD to EUR = R2`, it calculates using the following formula:
+    ```math
+    \text{JPY} → \text{EUR}=\frac{R1}{R2}​
+    ```
+    * If the value is greater than or equal to 0.1000, round the value to 4 decimal digits.
+    * If the value is less than 0.1000, round the value to 4 significant digits.
+8. Forex-mtl returns an exchange rate to user with a timestamp.
+
+---
 
 ## Appendix
 ### Currencies in Scope*
@@ -35,7 +59,12 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 ### Error Responses
 | Error case | HTTP status code | Message |
 |---|---|---|
-| Token not provided, token verification failed | 401 Unauthorized | Token verification failed. Please provide the correct token. |
-| Invalid request, insufficient parameters, currency out of scope | 400 Bad Request | Invalid request. 
+| Token not provided or token verification failed | 401 Unauthorized | Token verification failed. Please provide the correct token. |
+| Invalid request, insufficient parameters, or currency out of scope | 400 Bad Request | Invalid request. |
 | Unable to connect to the One-Frame Service when there is no saved data | 503 Service Unavailable | Unable to reach external rate service. Please try again later. |
 | Other unexpected errors while processing requests | 500 Internal Server Error | Internal error. Please contact the developer. |
+
+### QPS calculation
+#### Maximum times of cache clearing per day (every 5 minutes)
+```math
+\frac{\text{seconds in one day}}{\text{seconds to clear cache}} = \frac{86400\ \text{seconds}}{300\ \text{seconds per time}} = 288\ \text{times}
