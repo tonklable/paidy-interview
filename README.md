@@ -69,7 +69,7 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 ```math
 \frac{\text{seconds in one day}}{\text{seconds to clear cache}} = \frac{86400\ \text{seconds}}{300\ \text{seconds per time}} = 288\ \text{times}
 ```
-Redis clears cache every 5 minutes. There are maximum 288 times for the service to call One-Frame API.
+Redis clears cache every 5 minutes. There are maximum 288 times for the service to call One-Frame API, if Redis is not down.
 #### Maximum concurrency to call Once Frame API 
 
 ```math
