@@ -7,11 +7,11 @@
 3. Users receive an exchange rate only for currencies in scope (see **Appendix** for Currencies in Scope).
 4. All exchange rates are equally available to users; **no currency pair has higher priority or peak usage.**
 > The rate should not be older than 5 minutes.
-4. The rate should **not be older than 5 minutes**.
+5. The rate should **not be older than 5 minutes**.
 > The service should support at least 10,000 successful requests per day **with 1 API token**.
 
-5. The service **verifies the user token** and returns a successful response only for requests with a verified token.
-6. The service returns the error message and HTTP status code for the corresponding error cases (see **Appendix** for Error Responses).
+6. The service **verifies the user token** and returns a successful response only for requests with a verified token.
+7. The service returns the error message and HTTP status code for the corresponding error cases (see **Appendix** for Error Responses).
 
 ## Non-functional Requirements (Assumptions Included)
 1. Users can receive a response in real time with **latency less than 500 ms** when testing locally. We assume that all users are in Japan.
