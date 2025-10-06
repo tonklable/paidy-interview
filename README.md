@@ -60,7 +60,7 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 | Error case | HTTP status code | Message |
 |---|---|---|
 | Token not provided or token verification failed | 401 Unauthorized | Token verification failed. Please provide the correct token. |
-| Invalid request, insufficient parameters, or currency out of scope | 400 Bad Request | Invalid request. |
+| Invalid request, insufficient parameters, or currency out of scope | 400 Bad Request | Invalid request. Please provide both currencies in scope. |
 | Unable to connect to the One-Frame Service when there is no saved data | 503 Service Unavailable | Unable to reach external rate service. Please try again later. |
 | Other unexpected errors while processing requests | 500 Internal Server Error | Internal error. Please contact the developer. |
 
