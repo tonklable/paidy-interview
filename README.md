@@ -42,7 +42,7 @@
 7. Forex-mtl calculates exchange rates.  
 For example, `USD to JPY = R1`, `USD to EUR = R2`, it calculates using the following formula:
     ```math
-    \text{JPY} → \text{EUR}=\frac{R1}{R2}​
+    \text{JPY} → \text{EUR}=\frac{R2}{R1}​
     ```
     * If the value is greater than or equal to 0.1000, round the value to 4 decimal digits.
     * If the value is less than 0.1000, round the value to 4 significant digits.
