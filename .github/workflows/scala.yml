@@ -21,4 +21,5 @@ jobs:
       - name: Setup sbt launcher
         uses: sbt/setup-sbt@v1
       - name: Build and Test
+        working-directory: forex-mtl
         run: sbt +test
