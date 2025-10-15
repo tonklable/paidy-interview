@@ -15,6 +15,7 @@ object Dependencies {
     val scalaCheck     = "1.15.3"
     val scalaTest      = "3.2.7"
     val catsScalaCheck = "0.3.2"
+    val mockito        =  "3.2.10.0"
   }
 
   object Libraries {
@@ -44,6 +45,8 @@ object Dependencies {
     lazy val scalaTest      = "org.scalatest"     %% "scalatest"       % Versions.scalaTest
     lazy val scalaCheck     = "org.scalacheck"    %% "scalacheck"      % Versions.scalaCheck
     lazy val catsScalaCheck = "io.chrisdavenport" %% "cats-scalacheck" % Versions.catsScalaCheck
+    lazy val mockito = "org.scalatestplus" %% "mockito-3-4" % Versions.mockito
+
   }
 
 }
