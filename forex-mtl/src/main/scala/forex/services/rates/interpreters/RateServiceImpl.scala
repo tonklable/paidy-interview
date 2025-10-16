@@ -19,6 +19,11 @@ class RateServiceImpl[F[_]: Monad](
 
   override def get(pair: Rate.Pair): F[Error Either Rate] = {
     EitherT(cache.get(pair))
-      .leftFlatMap(_ => EitherT(api.getAll()).flatMap(rates => EitherT.fromEither(rates.find(_.pair == pair).toRight[Error](SystemError(s"$pair not in API response"))))).value
+      .leftFlatMap(_ =>
+        for {
+          rates <- EitherT(api.getAll())
+          _ <- EitherT.liftF(cache.store(rates))
+          rate <- EitherT.fromEither(rates.find(_.pair == pair).toRight[Error](SystemError(s"$pair not in API response")))
+      } yield rate).value
   }
 }
