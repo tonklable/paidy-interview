@@ -1,5 +1,47 @@
 # Paidy Take-Home Coding Exercises (Forex)
 
+## 💱 Exchange Rate API
+
+### `GET /rates`
+
+Fetches the latest exchange rate between two currencies.
+
+**Example Request:**
+```bash
+curl "http://localhost:8081/rates?from=EUR&to=THB"
+```
+**Example Successful Response (200 OK):**
+```json
+{
+  "from": "EUR",
+  "to": "THB",
+  "price": 39.5721,
+  "timestamp": "2025-10-18T14:22:15Z"
+}
+```
+
+**Example Error Response (400 Bad Request):**
+```json
+{
+  "error": "Invalid request. Please provide both currencies in scope."
+}
+```
+
+### Setup
+
+1. Start One-Frame API
+```bash
+docker run -p 8080:8080 paidyinc/one-frame
+```
+2. Start Redis
+```bash
+docker run -d --name redis-forex -p 6379:6379 redis:7-alpine
+```
+3. Start Forex Application
+```bash
+sbt run
+```
+
 ## Functional Requirements (Assumptions Included)
 > The service returns an exchange rate when provided with 2 supported currencies
 1. Users can **call the endpoint `/rates`** with `from` and `to` to receive an exchange rate.
