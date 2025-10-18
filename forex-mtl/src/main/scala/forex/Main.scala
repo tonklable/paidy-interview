@@ -6,7 +6,7 @@ import forex.config._
 import forex.services.rates.interpreters.RedisClient
 import fs2.Stream
 import org.http4s.blaze.server.BlazeServerBuilder
-import org.http4s.ember.client.EmberClientBuilder  // ✅ modern replacement
+import org.http4s.ember.client.EmberClientBuilder
 
 object Main extends IOApp {
 
