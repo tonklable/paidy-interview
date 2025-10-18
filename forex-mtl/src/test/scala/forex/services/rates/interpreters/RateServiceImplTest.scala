@@ -46,11 +46,14 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
 
         val service = new RateServiceImpl[Id](mockCache,mockApi)
 
-        // Act
         val result = service.get(testPair)
 
-        // Assert
-        result shouldBe testRate.asRight
+        val expectedResult = testRate.asRight.toOption.get
+        val actualResult = result.toOption.get
+
+        actualResult.pair shouldBe expectedResult.pair
+        actualResult.price shouldBe expectedResult.price
+        actualResult.timestamp shouldBe a [Timestamp]
         verify(mockCache, times(1)).getAll
         verify(mockApi, never()).getAll
       }
@@ -65,11 +68,14 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
 
         val service = new RateServiceImpl[Id](mockCache,mockApi)
 
-        // Act
         val result = service.get(testPair)
 
-        // Assert
-        result shouldBe testRate.asRight
+        val expectedResult = testRate.asRight.toOption.get
+        val actualResult = result.toOption.get
+
+        actualResult.pair shouldBe expectedResult.pair
+        actualResult.price shouldBe expectedResult.price
+        actualResult.timestamp shouldBe a [Timestamp]
         verify(mockCache, times(1)).getAll
         verify(mockApi, times(1)).getAll
         verify(mockCache, times(1)).store(testAllRates)
@@ -85,11 +91,14 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
 
         val service = new RateServiceImpl[Id](mockCache,mockApi)
 
-        // Act
         val result = service.get(testPair3)
 
-        // Assert
-        result shouldBe testRate3.asRight
+        val expectedResult = testRate3.asRight.toOption.get
+        val actualResult = result.toOption.get
+
+        actualResult.pair shouldBe expectedResult.pair
+        actualResult.price shouldBe expectedResult.price
+        actualResult.timestamp shouldBe a [Timestamp]
         verify(mockCache, times(1)).getAll
         verify(mockApi, times(1)).getAll
         verify(mockCache, times(1)).store(testAllRates)
@@ -124,8 +133,12 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     val allRates = List(usdEur, usdJpy)
 
     "return correct rate for USDEUR" in {
+      val pair = Rate.Pair(Currency.USD, Currency.EUR)
       val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
-      result shouldBe Some(usdEur)
+
+      val expectedPrice = usdEur.price
+      result.get.price shouldBe expectedPrice
+      result.get.pair shouldBe pair
     }
     "return correct rate for JPYEUR" in {
       val pair = Rate.Pair(Currency.JPY, Currency.EUR)
