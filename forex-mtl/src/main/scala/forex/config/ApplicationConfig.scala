@@ -15,8 +15,7 @@ case class OneFrameConfig(
  )
 
 case class RedisConfig(
-    host: String,
-    port: Int,
+    url: String,
     ttl: FiniteDuration
  )
 

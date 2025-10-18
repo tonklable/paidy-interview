@@ -6,8 +6,8 @@ object errors {
 
   sealed trait Error extends Exception
   object Error {
-    final case class RateLookupFailed(msg: String) extends Error
-    final case class SystemError(msg: String) extends Error
+    final case class RateLookupFailed(msg: String) extends Exception(msg) with Error
+    final case class SystemError(msg: String) extends Exception(msg) with Error
   }
 
   def toProgramError(error: RatesServiceError): Error = error match {

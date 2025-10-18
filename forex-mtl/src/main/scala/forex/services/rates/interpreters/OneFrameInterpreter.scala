@@ -5,47 +5,62 @@ import cats.effect.Sync
 import forex.config.OneFrameConfig
 import forex.domain.{Currency, Rate}
 import forex.services.rates.errors._
-import io.circe.Decoder
-import io.circe.generic.semiauto.deriveDecoder
-import org.http4s.{ParseFailure, Uri}
+import org.http4s.Method.GET
+import cats.implicits._
+import org.http4s.{Header, ParseFailure, Query, Request, Uri}
 import org.http4s.client.Client
-import org.http4s.Query
+import org.typelevel.ci.CIString
+import org.http4s.EntityDecoder
+import org.http4s.circe.jsonOf
+import cats.implicits.catsSyntaxApplicativeError
+import cats.data.EitherT
+import RateUtils.toRate
 
-case class OneFrameRateJson(
-   from: String,
-   to: String,
-   bid: BigDecimal,
-   ask: BigDecimal,
-   price: BigDecimal,
-   time_stamp: String
-  )
 
-object OneFrameRateJson {
-  implicit val decoder: Decoder[OneFrameRateJson] = deriveDecoder
-}
 
 class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends ApiAlgebra[F] {
-  val allPairs: List[String]= for {
-    from <- List("USD")
-    to <- Currency.all.map(_.toString) if from != to
-  } yield s"$from$to"
 
-  val url: F[Uri] = Sync[F].fromEither(OneFrameInterpreter.buildUri(config.url, allPairs))
+  implicit val ratesDecoder: EntityDecoder[F, List[RateJson]] = {
+    jsonOf[F, List[RateJson]]
+  }
 
-  override def getAll(): F[Either[Error, List[Rate]]] = {
-    println(client)
-    println(config)
-    Sync[F].pure(Right(List.empty))
 
+  override def getAll: F[Either[Error, List[Rate]]] = {
+    val allPairs = OneFrameInterpreter.buildAllPairs(Currency.all)
+    (for {
+      uri <- EitherT.fromEither[F](
+        OneFrameInterpreter.buildUri(config.url, allPairs)
+          .leftMap(e => Error.OneFrameLookupFailed(s"Invalid URI: ${e.details}"): Error)
+      )
+
+      request = OneFrameInterpreter.buildRequest[F](uri, config.token)
+
+      jsonRates <- client.expect[List[RateJson]](request)
+        .attemptT
+        .leftMap(e => Error.OneFrameLookupFailed(s"API failed: ${e.getMessage}"): Error)
+
+      rates = jsonRates.flatMap(toRate)
+
+    } yield rates).value
   }
 }
 
-
 object OneFrameInterpreter {
+  def buildAllPairs(currencyList: List[Currency]): List[String]= for {
+    from <- List("USD")
+    to <- currencyList.map(_.toString) if from != to
+  } yield s"$from$to"
+
   def buildUri(base: String, pairs: List[String]): Either[ParseFailure, Uri] = {
     Uri.fromString(base).map { uri =>
       val query = Query.fromPairs(pairs.map("pair" -> _): _*)
       uri.copy(query = query)
     }
   }
+
+  def buildRequest[F[_]](uri: Uri, token: String): Request[F] = {
+    val header = Header.Raw(CIString("token"), token)
+    Request[F](GET, uri).withHeaders(header)
+  }
+
 }

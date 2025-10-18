@@ -5,12 +5,11 @@ import forex.services.rates.Algebra
 import forex.services.rates.RedisAlgebra
 import forex.services.rates.ApiAlgebra
 import cats.data.EitherT
-//import cats.syntax.applicative._
-//import cats.syntax.either._
 import forex.domain.Rate
 import forex.services.rates.errors._
 import forex.services.rates.errors.Error.SystemError
-//import forex.domain.RateCalculation
+import forex.domain._
+import RateServiceImpl.findOrDivideRate
 
 class RateServiceImpl[F[_]: Monad](
     cache: RedisAlgebra[F],
@@ -18,12 +17,31 @@ class RateServiceImpl[F[_]: Monad](
     ) extends Algebra[F] {
 
   override def get(pair: Rate.Pair): F[Error Either Rate] = {
-    EitherT(cache.get(pair))
+    EitherT(cache.getAll)
+      .flatMap(rates => EitherT.fromOption(findOrDivideRate(rates,pair), SystemError(s"Cache miss or cannot compute rate for $pair"): Error))
       .leftFlatMap(_ =>
         for {
-          rates <- EitherT(api.getAll())
+          rates <- EitherT(api.getAll)
           _ <- EitherT.liftF(cache.store(rates))
-          rate <- EitherT.fromEither(rates.find(_.pair == pair).toRight[Error](SystemError(s"$pair not in API response")))
+          rate <- EitherT.fromOption(findOrDivideRate(rates,pair),SystemError(s"$pair not in API response"): Error)
       } yield rate).value
+  }
+}
+
+object RateServiceImpl {
+  def findOrDivideRate(rates: List[Rate], pair: Rate.Pair): Option[Rate] = {
+    (pair.from, pair.to) match {
+      case (f, t) if f==t =>
+        Some(Rate(pair,Price(1.0000)/Price(1.0000),Timestamp.now))
+      case (f, Currency.USD) =>
+        rates.find(_.pair == Rate.Pair(Currency.USD, f)).map(r => Rate(pair, Price(1.0000)/r.price, Timestamp.now))
+      case (Currency.USD, _) =>
+        rates.find(_.pair == pair).map(r => Rate(pair, r.price/Price(1.0000), Timestamp.now))
+      case _ =>
+        for {
+          usdToFrom <- rates.find(_.pair == Rate.Pair(Currency.USD, pair.from))
+          usdToTo   <- rates.find(_.pair == Rate.Pair(Currency.USD, pair.to))
+        } yield Rate(pair, usdToTo.price/usdToFrom.price, Timestamp.now)
+    }
   }
 }

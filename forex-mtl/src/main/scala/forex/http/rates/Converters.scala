@@ -15,4 +15,11 @@ object Converters {
       )
   }
 
+  private[rates] implicit class GetApiErrorResponseOps(val error: String) extends AnyVal {
+    def asGetApiErrorResponse: GetApiErrorResponse =
+      GetApiErrorResponse(
+        error= error
+      )
+  }
+
 }

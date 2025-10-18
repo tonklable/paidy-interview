@@ -4,5 +4,5 @@ import forex.domain.Rate
 import errors._
 
 trait ApiAlgebra[F[_]] {
-  def getAll(): F[Error Either List[Rate]]
+  def getAll: F[Error Either List[Rate]]
 }

@@ -17,6 +17,7 @@ object Dependencies {
     val scalaTest      = "3.2.7"
     val catsScalaCheck = "0.3.2"
     val mockito        =  "3.2.10.0"
+    val redis4cats     = "0.14.0"
   }
 
   object Libraries {
@@ -37,6 +38,9 @@ object Dependencies {
     lazy val circeParser     = circe("circe-parser")
     lazy val pureConfig      = "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig
     lazy val dotEnv          = "io.github.cdimascio" % "dotenv-java" % Versions.dotEnv
+    lazy val redis4catsEffects = "dev.profunktor" %% "redis4cats-effects"  % Versions.redis4cats
+    lazy val redis4catsStreams = "dev.profunktor" %% "redis4cats-streams"  % Versions.redis4cats
+
 
     // Compiler plugins
     lazy val kindProjector = "org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full
