@@ -6,12 +6,22 @@ import forex.http.rates.RatesHttpRoutes
 import forex.services._
 import forex.programs._
 import org.http4s._
+import org.http4s.client.Client
 import org.http4s.implicits._
 import org.http4s.server.middleware.{ AutoSlash, Timeout }
+import forex.services.rates.interpreters.RedisClient
 
-class Module[F[_]: Concurrent: Timer](config: ApplicationConfig) {
+class Module[F[_]: Concurrent: Timer](
+    config: ApplicationConfig,
+    httpClient: Client[F],
+    redisClient: RedisClient[F]
+) {
 
-  private val ratesService: RatesService[F] = RatesServices.dummy[F]
+  private val redisService: RedisService[F] = RedisService.redis[F](redisClient, config.redis)
+
+  private val oneFrameService: OneFrameService[F] = OneFrameService.oneFrame[F](httpClient, config.oneFrame)
+
+  private val ratesService: RatesService[F] = RatesServices.cached[F](redisService, oneFrameService)
 
   private val ratesProgram: RatesProgram[F] = RatesProgram[F](ratesService)
 

@@ -9,12 +9,15 @@ object Dependencies {
     val http4s     = "0.22.15"
     val circe      = "0.14.2"
     val pureConfig = "0.17.4"
+    val dotEnv     = "3.1.0"
 
     val kindProjector  = "0.13.2"
     val logback        = "1.2.3"
     val scalaCheck     = "1.15.3"
     val scalaTest      = "3.2.7"
     val catsScalaCheck = "0.3.2"
+    val mockito        =  "3.2.10.0"
+    val redis4cats     = "0.14.0"
   }
 
   object Libraries {
@@ -28,11 +31,16 @@ object Dependencies {
     lazy val http4sDsl       = http4s("http4s-dsl")
     lazy val http4sServer    = http4s("http4s-blaze-server")
     lazy val http4sCirce     = http4s("http4s-circe")
+    lazy val http4sClient    = http4s("http4s-ember-client")
     lazy val circeCore       = circe("circe-core")
     lazy val circeGeneric    = circe("circe-generic")
     lazy val circeGenericExt = circe("circe-generic-extras")
     lazy val circeParser     = circe("circe-parser")
     lazy val pureConfig      = "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig
+    lazy val dotEnv          = "io.github.cdimascio" % "dotenv-java" % Versions.dotEnv
+    lazy val redis4catsEffects = "dev.profunktor" %% "redis4cats-effects"  % Versions.redis4cats
+    lazy val redis4catsStreams = "dev.profunktor" %% "redis4cats-streams"  % Versions.redis4cats
+
 
     // Compiler plugins
     lazy val kindProjector = "org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full
@@ -44,6 +52,8 @@ object Dependencies {
     lazy val scalaTest      = "org.scalatest"     %% "scalatest"       % Versions.scalaTest
     lazy val scalaCheck     = "org.scalacheck"    %% "scalacheck"      % Versions.scalaCheck
     lazy val catsScalaCheck = "io.chrisdavenport" %% "cats-scalacheck" % Versions.catsScalaCheck
+    lazy val mockito = "org.scalatestplus" %% "mockito-3-4" % Versions.mockito
+
   }
 
 }

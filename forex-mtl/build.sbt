@@ -53,10 +53,14 @@ libraryDependencies ++= Seq(
   compilerPlugin(Libraries.kindProjector),
   Libraries.cats,
   Libraries.catsEffect,
+  Libraries.dotEnv,
+  Libraries.redis4catsEffects,
+  Libraries.redis4catsStreams,
   Libraries.fs2,
   Libraries.http4sDsl,
   Libraries.http4sServer,
   Libraries.http4sCirce,
+  Libraries.http4sClient,
   Libraries.circeCore,
   Libraries.circeGeneric,
   Libraries.circeGenericExt,
@@ -65,5 +69,6 @@ libraryDependencies ++= Seq(
   Libraries.logback,
   Libraries.scalaTest      % Test,
   Libraries.scalaCheck     % Test,
-  Libraries.catsScalaCheck % Test
+  Libraries.catsScalaCheck % Test,
+  Libraries.mockito        % Test
 )
