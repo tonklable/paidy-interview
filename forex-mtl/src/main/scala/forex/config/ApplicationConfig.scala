@@ -12,13 +12,12 @@ case class OneFrameConfig(
     url: String,
     token: String,
     timeout: FiniteDuration
- )
+)
 
 case class RedisConfig(
     url: String,
     ttl: FiniteDuration
- )
-
+)
 
 case class HttpConfig(
     host: String,

@@ -25,7 +25,7 @@ object Protocol {
   )
 
   final case class GetApiErrorResponse(
-       error: String
+      error: String
   )
 
   implicit val currencyEncoder: Encoder[Currency] =

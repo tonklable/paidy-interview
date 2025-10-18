@@ -15,11 +15,11 @@ object Config {
       val _ = System.setProperty(entry.getKey, entry.getValue)
     }
   }
+
   /**
-   * @param path the property path inside the default configuration
-   */
-  def stream[F[_]: Sync](path: String): Stream[F, ApplicationConfig] = {
+    * @param path the property path inside the default configuration
+    */
+  def stream[F[_]: Sync](path: String): Stream[F, ApplicationConfig] =
     Stream.eval(Sync[F].delay(loadEnv())) >>
       Stream.eval(Sync[F].delay(ConfigSource.default.at(path).loadOrThrow[ApplicationConfig]))
-  }
 }
