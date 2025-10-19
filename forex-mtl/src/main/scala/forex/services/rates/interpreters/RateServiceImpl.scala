@@ -34,7 +34,7 @@ object RateServiceImpl {
       return SystemError(s"Cannot compute rate for $pair: zero price in rates").asLeft[Rate]
     (pair.from, pair.to) match {
       case (f, t) if f == t =>
-        Rate(pair, Price(1.0000) / Price(1.0000), Timestamp.now).asRight[Error]
+        Rate(pair, Price(1.0000).round, Timestamp.now).asRight[Error]
       case (f, Currency.USD) =>
         rates
           .find(_.pair == Rate.Pair(Currency.USD, f))
@@ -43,7 +43,7 @@ object RateServiceImpl {
       case (Currency.USD, _) =>
         rates
           .find(_.pair == pair)
-          .map(r => Rate(pair, r.price / Price(1.0000), Timestamp.now))
+          .map(r => Rate(pair, r.price.round, Timestamp.now))
           .toRight(SystemError(s"Cannot compute rate for $pair"))
       case _ =>
         for {
