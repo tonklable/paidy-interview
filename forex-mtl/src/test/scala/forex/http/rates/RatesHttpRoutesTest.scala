@@ -1,7 +1,7 @@
 package forex.http.rates
 
 import cats.effect.IO
-import forex.domain.{ Currency, Price, Rate, Timestamp }
+import forex.domain.{Currency, Price, Rate, Timestamp}
 import forex.programs.RatesProgram
 import forex.programs.rates.Protocol.GetRatesRequest
 import forex.programs.rates.errors.Error
@@ -13,6 +13,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 import io.circe.parser._
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 
 class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
@@ -23,6 +25,8 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
     Timestamp.now
   )
 
+  val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+
   "RatesHttpRoutes" should {
 
     "return 200 OK with rate when request is valid" in {
@@ -31,7 +35,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       when(mockProgram.get(any[GetRatesRequest]()))
         .thenReturn(IO.pure(Right(testRate)))
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -50,7 +54,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       when(mockProgram.get(any[GetRatesRequest]()))
         .thenReturn(IO.pure(Left(Error.SystemError("Data parsing failed"))))
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -65,7 +69,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       val json = parse(body).getOrElse(fail("Invalid JSON"))
 
       (json \\ "error").head.asString shouldBe Some(
-        "Data parsing failed"
+        "Internal error. Please contact the developer."
       )
     }
 
@@ -75,7 +79,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       when(mockProgram.get(any[GetRatesRequest]()))
         .thenReturn(IO.pure(Left(Error.RateLookupFailed("OneFrame API is down"))))
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -90,14 +94,14 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       val json = parse(body).getOrElse(fail("Invalid JSON"))
 
       (json \\ "error").head.asString shouldBe Some(
-        "OneFrame API is down"
+        "Unable to reach external rate service. Please try again later."
       )
     }
 
     "return 400 Bad Request when 'from' parameter is missing" in {
       val mockProgram = mock[RatesProgram[IO]]
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -119,7 +123,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
     "return 400 Bad Request when 'to' parameter is missing" in {
       val mockProgram = mock[RatesProgram[IO]]
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -141,7 +145,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
     "return 400 Bad Request when both parameters are missing" in {
       val mockProgram = mock[RatesProgram[IO]]
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -163,7 +167,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
     "return 400 Bad Request when currency is invalid" in {
       val mockProgram = mock[RatesProgram[IO]]
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,
@@ -185,7 +189,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
     "return 404 Not Found for invalid path" in {
       val mockProgram = mock[RatesProgram[IO]]
 
-      val routes = new RatesHttpRoutes[IO](mockProgram).routes
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
       val request = Request[IO](
         method = Method.GET,

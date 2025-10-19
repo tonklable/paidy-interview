@@ -2,17 +2,17 @@ package forex.services.rates.interpreters
 
 import forex.services.rates.ApiAlgebra
 import forex.config.OneFrameConfig
-import forex.domain.{Currency, Rate}
+import forex.domain.{ Currency, Rate }
 import forex.services.rates.errors._
 import org.http4s.Method.GET
 import cats.implicits._
-import org.http4s.{Header, ParseFailure, Query, Request, Uri}
+import org.http4s.{ Header, ParseFailure, Query, Request, Uri }
 import org.http4s.client.Client
 import org.typelevel.ci.CIString
 import org.http4s.EntityDecoder
 import org.http4s.circe.jsonOf
 import RateUtils.toRate
-import forex.services.rates.errors.Error.{OneFrameLookupFailed, SystemError}
+import forex.services.rates.errors.Error.{ OneFrameLookupFailed, SystemError }
 import cats.effect._
 
 class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends ApiAlgebra[F] {

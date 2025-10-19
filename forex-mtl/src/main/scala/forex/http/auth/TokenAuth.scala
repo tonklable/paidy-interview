@@ -5,11 +5,12 @@ import cats.effect.Sync
 import cats.implicits.catsSyntaxApplicativeId
 import forex.http.rates.Converters.GetApiErrorResponseOps
 import org.http4s.Status.Unauthorized
-import org.http4s.{HttpRoutes, Request, Response}
+import org.http4s.{ HttpRoutes, Request, Response }
 import org.typelevel.ci.CIString
+import org.typelevel.log4cats.Logger
 
 object TokenAuth {
-  def apply[F[_]: Sync](expectedToken: String)(routes: HttpRoutes[F]): HttpRoutes[F] =
+  def apply[F[_]: Sync](expectedToken: String)(routes: HttpRoutes[F], logger: Logger[F]): HttpRoutes[F] =
     HttpRoutes { req: Request[F] =>
       val tokenHeader = req.headers.get(CIString("token")).map(_.head.value)
 
@@ -18,6 +19,7 @@ object TokenAuth {
           routes(req)
 
         case _ =>
+          logger.error("Token not provided or token verification failed")
           OptionT.liftF(
             Response[F](status = Unauthorized)
               .withEntity("Token not provided or token verification failed".asGetApiErrorResponse)

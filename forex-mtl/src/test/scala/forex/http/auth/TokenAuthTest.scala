@@ -8,6 +8,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.http4s.dsl.io._
 import org.typelevel.ci.CIString
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 class TokenAuthTest extends AnyWordSpec with Matchers {
 
@@ -18,9 +20,11 @@ class TokenAuthTest extends AnyWordSpec with Matchers {
       Ok("Success")
   }
 
+  val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+
   "TokenAuth" should {
     "allow request with valid token" in {
-      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes)
+      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes, logger)
 
       val request = Request[IO](
         method = Method.GET,
@@ -33,7 +37,7 @@ class TokenAuthTest extends AnyWordSpec with Matchers {
     }
 
     "reject request with invalid token" in {
-      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes)
+      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes, logger)
 
       val request = Request[IO](
         method = Method.GET,
@@ -52,7 +56,7 @@ class TokenAuthTest extends AnyWordSpec with Matchers {
     }
 
     "reject request with missing token" in {
-      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes)
+      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes, logger)
 
       val request = Request[IO](
         method = Method.GET,
@@ -71,7 +75,7 @@ class TokenAuthTest extends AnyWordSpec with Matchers {
     }
 
     "reject request with empty token" in {
-      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes)
+      val authedRoutes = TokenAuth[IO](expectedToken)(testRoutes, logger)
 
       val request = Request[IO](
         method = Method.GET,

@@ -1,7 +1,7 @@
 package forex.services.rates
 
 import cats.effect._
-import forex.config.{OneFrameConfig, RedisConfig}
+import forex.config.{ OneFrameConfig, RedisConfig }
 import interpreters._
 import org.http4s.client.Client
 
