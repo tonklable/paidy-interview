@@ -35,6 +35,7 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F], logger: Logger[F]) ext
           Ok(rate.asGetApiResponse)
       }
     case GET -> Root :? _ =>
+      logger.error("Currency is out of scope or not sufficient") >>
       BadRequest("Invalid request. Please provide both currencies in scope.".asGetApiErrorResponse)
   }
 
