@@ -39,7 +39,11 @@ docker run -p 8080:8080 paidyinc/one-frame
 ```bash
 docker run -d --name redis-forex -p 6379:6379 redis:7-alpine
 ```
-3. Configure environment variables
+3. Navigate to the forex-mtl folder
+```bash
+cd forex-mtl
+```
+4. Configure environment variables
 - Copy the template `.env.example` to `.env`
 ```bash
 cp .env.example .env
@@ -51,7 +55,7 @@ ONEFRAME_URL=http://localhost:8080/rates
 REDIS_URL=redis://localhost:6379
 AUTH_TOKEN=your-auth-token
 ```
-4. Start Forex Application
+5. Start Forex Application
 ```bash
 sbt run
 ```
