@@ -22,7 +22,7 @@ class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig)
     jsonOf[F, List[RateJson]]
   }
 
-  override def getAll: F[Either[Error, List[Rate]]] = {
+  override def getAll: F[Error Either List[Rate]] = {
     val allPairs = OneFrameInterpreter.buildAllPairs(Currency.all)
     OneFrameInterpreter.buildUri(config.url, allPairs) match {
       case Left(error) => (SystemError(s"Invalid URI: ${error.details}"): Error).asLeft[List[Rate]].pure[F]
