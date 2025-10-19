@@ -1,6 +1,6 @@
 package forex
 
-import cats.effect.{Concurrent, Timer}
+import cats.effect.{ Concurrent, Timer }
 import forex.config.ApplicationConfig
 import forex.http.auth.TokenAuth
 import forex.http.rates.RatesHttpRoutes
@@ -9,7 +9,7 @@ import forex.programs._
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.implicits._
-import org.http4s.server.middleware.{AutoSlash, Timeout}
+import org.http4s.server.middleware.{ AutoSlash, Timeout }
 import forex.services.rates.interpreters.RedisClient
 
 class Module[F[_]: Concurrent: Timer](
