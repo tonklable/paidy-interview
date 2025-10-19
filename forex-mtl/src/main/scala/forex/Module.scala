@@ -1,14 +1,15 @@
 package forex
 
-import cats.effect.{ Concurrent, Timer }
+import cats.effect.{Concurrent, Timer}
 import forex.config.ApplicationConfig
+import forex.http.auth.TokenAuth
 import forex.http.rates.RatesHttpRoutes
 import forex.services._
 import forex.programs._
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.implicits._
-import org.http4s.server.middleware.{ AutoSlash, Timeout }
+import org.http4s.server.middleware.{AutoSlash, Timeout}
 import forex.services.rates.interpreters.RedisClient
 
 class Module[F[_]: Concurrent: Timer](
@@ -30,6 +31,9 @@ class Module[F[_]: Concurrent: Timer](
   type PartialMiddleware = HttpRoutes[F] => HttpRoutes[F]
   type TotalMiddleware   = HttpApp[F] => HttpApp[F]
 
+  private val authenticatedRoutes: HttpRoutes[F] =
+    TokenAuth[F](config.auth.authToken)(ratesHttpRoutes)
+
   private val routesMiddleware: PartialMiddleware = {
     { http: HttpRoutes[F] =>
       AutoSlash(http)
@@ -40,7 +44,7 @@ class Module[F[_]: Concurrent: Timer](
     Timeout(config.http.timeout)(http)
   }
 
-  private val http: HttpRoutes[F] = ratesHttpRoutes
+  private val http: HttpRoutes[F] = authenticatedRoutes
 
   val httpApp: HttpApp[F] = appMiddleware(routesMiddleware(http).orNotFound)
 

@@ -8,7 +8,7 @@ Fetches the latest exchange rate between two currencies.
 
 **Example Request:**
 ```bash
-curl "http://localhost:8081/rates?from=EUR&to=THB"
+curl -H "token: 9cf9107f6fb44c97b77496c691fd4e7b" "http://localhost:8081/rates?from=JPY&to=USD"
 ```
 **Example Successful Response (200 OK):**
 ```json
