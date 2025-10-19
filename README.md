@@ -8,8 +8,9 @@ Fetches the latest exchange rate between two currencies.
 
 **Example Request:**
 ```bash
-curl -H "token: 9cf9107f6fb44c97b77496c691fd4e7b" "http://localhost:8081/rates?from=JPY&to=USD"
+curl -H "token: your-auth-token" "http://localhost:8081/rates?from=JPY&to=USD"
 ```
+Remark: `your-auth-token` can be set in the configuration file `.env`
 **Example Successful Response (200 OK):**
 ```json
 {
@@ -37,7 +38,19 @@ docker run -p 8080:8080 paidyinc/one-frame
 ```bash
 docker run -d --name redis-forex -p 6379:6379 redis:7-alpine
 ```
-3. Start Forex Application
+3. Configure environment variables
+- Copy the template `.env.example` to `.env`
+```bash
+cp .env.example .env
+```
+- Fill in the actual values in `.env`
+```
+ONEFRAME_TOKEN=your-oneframe-token
+ONEFRAME_URL=http://localhost:8080/rates
+REDIS_URL=redis://localhost:6379
+AUTH_TOKEN=your-auth-token
+```
+4. Start Forex Application
 ```bash
 sbt run
 ```
@@ -61,8 +74,7 @@ sbt run
 2. The service supports **at least 10,000 successful requests per day**.
 3. The service can call **One-Frame API only 1000 times** per day. There is no limitation on the request length or response size of the One-Frame API.
 4. The service has **unit tests** for successful cases (for an exchange rate greater than and less than 0.1) and error cases.
-5. The service must **store user tokens and the One-Frame API token only in secure storage** with encryption in production.
-6. The service should be able to handle **a maximum of 3 requests concurrently** (under 6 QPS).
+5. The service should be able to handle **a maximum of 3 requests concurrently** (under 6 QPS).
 
 ## Sequence Diagram
 
@@ -105,6 +117,10 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 | Invalid request, insufficient parameters, or currency out of scope | 400 Bad Request | Invalid request. Please provide both currencies in scope. |
 | Unable to connect to the One-Frame Service when there is no saved data | 503 Service Unavailable | Unable to reach external rate service. Please try again later. |
 | Other unexpected errors while processing requests | 500 Internal Server Error | Internal error. Please contact the developer. |
+
+### Manual Test
+
+Manual test has been performed. Please refer to [manual-test.md](manual-test.md)
 
 ### QPS calculation
 #### Maximum times of cache clearing per day (every 5 minutes)
