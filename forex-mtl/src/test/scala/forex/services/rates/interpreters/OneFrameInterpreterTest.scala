@@ -1,23 +1,14 @@
 package forex.services.rates.interpreters
 
 import cats.Id
-import forex.config.OneFrameConfig
 import forex.domain.Currency.{EUR, JPY, THB, USD}
 import org.http4s.Uri
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.typelevel.ci.CIString
 
-
-class OneFrameInterpreterTest extends AnyWordSpec with Matchers{
-  "OneFrameInterpreter.getAll" should {
-    val config = OneFrameConfig(
-      url = "http://localhost:8080/rates",
-      token = "token",
-      timeout = 5.seconds
-    )
-  }
-
+class OneFrameInterpreterTest extends AnyWordSpec with Matchers with MockitoSugar{
   "buildUrl" should {
     val pairs = List("USDEUR", "USDJPY", "USDTHB")
 

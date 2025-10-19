@@ -20,7 +20,7 @@ class Application[F[_]: ConcurrentEffect: Timer: ContextShift] {
   def stream(ec: ExecutionContext): Stream[F, Unit] =
     for {
       config <- Config.stream("app")
-      httpClient <- Stream.resource(EmberClientBuilder.default[F].build)
+      httpClient <- Stream.resource(EmberClientBuilder.default[F].withTimeout(config.oneFrame.timeout).build)
       redisClient <- Stream.resource(RedisClient.make[F](config.redis.url))
       module = new Module[F](config, httpClient, redisClient)
       _ <- BlazeServerBuilder[F](ec)

@@ -13,10 +13,9 @@ import org.http4s.EntityDecoder
 import org.http4s.circe.jsonOf
 import RateUtils.toRate
 import forex.services.rates.errors.Error.{OneFrameLookupFailed, SystemError}
-import cats.effect.implicits.catsEffectSyntaxConcurrent
 import cats.effect._
 
-class OneFrameInterpreter[F[_]: Concurrent: Timer](client: Client[F], config: OneFrameConfig) extends ApiAlgebra[F] {
+class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends ApiAlgebra[F] {
 
   implicit val ratesDecoder: EntityDecoder[F, List[RateJson]] = {
     jsonOf[F, List[RateJson]]
@@ -28,7 +27,7 @@ class OneFrameInterpreter[F[_]: Concurrent: Timer](client: Client[F], config: On
       case Left(error) => (SystemError(s"Invalid URI: ${error.details}"): Error).asLeft[List[Rate]].pure[F]
       case Right(uri) =>
         val request = OneFrameInterpreter.buildRequest[F](uri, config.token)
-        client.expect[List[RateJson]](request).timeout(config.timeout).attempt.flatMap {
+        client.expect[List[RateJson]](request).attempt.flatMap {
           case Left(error) =>
             (OneFrameLookupFailed(s"API failed: ${error.getMessage}"): Error).asLeft[List[Rate]].pure[F]
           case Right(jsonRates) => jsonRates.flatMap(toRate).asRight[Error].pure[F]
