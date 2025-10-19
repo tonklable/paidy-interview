@@ -11,6 +11,7 @@ Fetches the latest exchange rate between two currencies.
 curl -H "token: your-auth-token" "http://localhost:8081/rates?from=JPY&to=USD"
 ```
 Remark: `your-auth-token` can be set in the configuration file `.env`
+
 **Example Successful Response (200 OK):**
 ```json
 {
@@ -120,7 +121,7 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 
 ### Manual Test
 
-Manual test has been performed. Please refer to [manual-test.md](manual-test.md)
+Manual test has been performed. Please refer to [manual-test.md](manual-test.md).
 
 ### QPS calculation
 #### Maximum times of cache clearing per day (every 5 minutes)
