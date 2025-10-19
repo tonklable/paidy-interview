@@ -1,6 +1,6 @@
 package forex.services.rates.interpreters
 
-import cats.Id
+import cats.effect.IO
 import cats.implicits.catsSyntaxEitherId
 import forex.domain.{Currency, Price, Rate, Timestamp}
 import forex.services.rates.RedisAlgebra
@@ -11,6 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
 import forex.services.rates.errors._
+import org.mockito.ArgumentMatchers.any
 
 
 class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
@@ -39,14 +40,15 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
   "RateServiceImpl.get" should {
     "return rate from cache" when {
       "cache exists" in {
-        val mockCache = mock[RedisAlgebra[Id]]
-        val mockApi = mock[ApiAlgebra[Id]]
+        val mockCache = mock[RedisAlgebra[IO]]
+        val mockApi = mock[ApiAlgebra[IO]]
 
-        when(mockCache.getAll).thenReturn(testAllRates.asRight)
+        when(mockCache.getAll).thenReturn(IO.pure(testAllRates.asRight))
 
-        val service = new RateServiceImpl[Id](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi)
 
-        val result = service.get(testPair)
+        val resultIO = service.get(testPair)
+        val result = resultIO.unsafeRunSync()
 
         val expectedResult = testRate.asRight.toOption.get
         val actualResult = result.toOption.get
@@ -60,15 +62,17 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     }
     "return rate from OneFrameAPI" when {
       "cache does not exist when pair contains USD" in {
-        val mockCache = mock[RedisAlgebra[Id]]
-        val mockApi = mock[ApiAlgebra[Id]]
+        val mockCache = mock[RedisAlgebra[IO]]
+        val mockApi = mock[ApiAlgebra[IO]]
 
-        when(mockCache.getAll).thenReturn(testRedisError.asLeft)
-        when(mockApi.getAll).thenReturn(testAllRates.asRight)
+        when(mockCache.getAll).thenReturn(IO.pure(testRedisError.asLeft))
+        when(mockApi.getAll).thenReturn(IO.pure(testAllRates.asRight))
+        when(mockCache.store(any[List[Rate]]())).thenReturn(IO.unit)
 
-        val service = new RateServiceImpl[Id](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi)
 
-        val result = service.get(testPair)
+        val resultIO = service.get(testPair)
+        val result = resultIO.unsafeRunSync()
 
         val expectedResult = testRate.asRight.toOption.get
         val actualResult = result.toOption.get
@@ -83,15 +87,17 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     }
     "return rate from OneFrameAPI" when {
       "cache does not exist when pair does not contain USD" in {
-        val mockCache = mock[RedisAlgebra[Id]]
-        val mockApi = mock[ApiAlgebra[Id]]
+        val mockCache = mock[RedisAlgebra[IO]]
+        val mockApi = mock[ApiAlgebra[IO]]
 
-        when(mockCache.getAll).thenReturn(testRedisError.asLeft)
-        when(mockApi.getAll).thenReturn(testAllRates.asRight)
+        when(mockCache.getAll).thenReturn(IO.pure(testRedisError.asLeft))
+        when(mockApi.getAll).thenReturn(IO.pure(testAllRates.asRight))
+        when(mockCache.store(any[List[Rate]]())).thenReturn(IO.unit)
 
-        val service = new RateServiceImpl[Id](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi)
 
-        val result = service.get(testPair3)
+        val resultIO = service.get(testPair3)
+        val result = resultIO.unsafeRunSync()
 
         val expectedResult = testRate3.asRight.toOption.get
         val actualResult = result.toOption.get
@@ -106,18 +112,17 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     }
     "return error message" when {
       "cannot connect to OneFrameAPI" in {
-        val mockCache = mock[RedisAlgebra[Id]]
-        val mockApi = mock[ApiAlgebra[Id]]
+        val mockCache = mock[RedisAlgebra[IO]]
+        val mockApi = mock[ApiAlgebra[IO]]
 
-        when(mockCache.getAll).thenReturn(testRedisError.asLeft)
-        when(mockApi.getAll).thenReturn(testOneFrameError.asLeft)
+        when(mockCache.getAll).thenReturn(IO.pure(testRedisError.asLeft))
+        when(mockApi.getAll).thenReturn(IO.pure(testOneFrameError.asLeft))
 
-        val service = new RateServiceImpl[Id](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi)
 
-        // Act
-        val result = service.get(testPair)
+        val resultIO = service.get(testPair)
+        val result = resultIO.unsafeRunSync()
 
-        // Assert
         result shouldBe testOneFrameError.asLeft
         verify(mockCache, times(1)).getAll
         verify(mockApi, times(1)).getAll
@@ -137,7 +142,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
       val usdJpy = Rate(Rate.Pair(Currency.USD, Currency.JPY), Price(BigDecimal(150.0)), now)
       val allRates = List(usdEur, usdJpy)
 
-      val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
+      val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR), now)
 
       result.isLeft shouldBe true
       result match {
@@ -150,7 +155,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
 
     "return correct rate for USDEUR" in {
       val pair = Rate.Pair(Currency.USD, Currency.EUR)
-      val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
+      val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR), now)
 
       result.isRight shouldBe true
 
@@ -161,7 +166,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     }
     "return correct rate for JPYEUR" in {
       val pair = Rate.Pair(Currency.JPY, Currency.EUR)
-      val result = RateServiceImpl.findOrDivideRate(allRates, pair)
+      val result = RateServiceImpl.findOrDivideRate(allRates, pair, now)
 
       result.isRight shouldBe true
 
@@ -172,7 +177,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     }
     "return correct rate for EURUSD" in {
       val pair = Rate.Pair(Currency.EUR, Currency.USD)
-      val result = RateServiceImpl.findOrDivideRate(allRates, pair)
+      val result = RateServiceImpl.findOrDivideRate(allRates, pair, now)
 
       result.isRight shouldBe true
 
@@ -183,7 +188,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     }
     "return correct rate for JPYJPY (same currency)" in {
       val pair = Rate.Pair(Currency.JPY, Currency.JPY)
-      val result = RateServiceImpl.findOrDivideRate(allRates, pair)
+      val result = RateServiceImpl.findOrDivideRate(allRates, pair, now)
 
       result.isRight shouldBe true
 

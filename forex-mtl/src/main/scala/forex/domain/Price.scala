@@ -8,7 +8,7 @@ case class Price(value: BigDecimal) extends AnyVal {
     Price(result).round
   }
   def round: Price = {
-    val scale  = if (value >= 0.1) 4 else 4 + (value.scale - value.precision)
+    val scale = if (value >= 0.1) 4 else 4 + (value.scale - value.precision)
     Price(value.setScale(scale, RoundingMode.HALF_UP))
   }
 }

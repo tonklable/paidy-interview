@@ -1,7 +1,8 @@
 package forex.services.rates.interpreters
 
 import cats.Id
-import forex.domain.Currency.{ EUR, JPY, THB, USD }
+import forex.config.OneFrameConfig
+import forex.domain.Currency.{EUR, JPY, THB, USD}
 import org.http4s.Uri
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -9,6 +10,14 @@ import org.typelevel.ci.CIString
 
 
 class OneFrameInterpreterTest extends AnyWordSpec with Matchers{
+  "OneFrameInterpreter.getAll" should {
+    val config = OneFrameConfig(
+      url = "http://localhost:8080/rates",
+      token = "token",
+      timeout = 5.seconds
+    )
+  }
+
   "buildUrl" should {
     val pairs = List("USDEUR", "USDJPY", "USDTHB")
 
