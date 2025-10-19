@@ -4,11 +4,11 @@ import cats.data.OptionT
 import cats.effect.Sync
 import forex.http.rates.Converters.GetApiErrorResponseOps
 import org.http4s.Status.Unauthorized
-import org.http4s.{HttpRoutes, Request, Response}
+import org.http4s.{ HttpRoutes, Request, Response }
 import org.typelevel.ci.CIString
 
 object TokenAuth {
-  def apply[F[_]: Sync](expectedToken: String)(routes: HttpRoutes[F]): HttpRoutes[F] = {
+  def apply[F[_]: Sync](expectedToken: String)(routes: HttpRoutes[F]): HttpRoutes[F] =
     HttpRoutes { req: Request[F] =>
       val tokenHeader = req.headers.get(CIString("token")).map(_.head.value)
 
@@ -25,5 +25,4 @@ object TokenAuth {
           )
       }
     }
-  }
 }

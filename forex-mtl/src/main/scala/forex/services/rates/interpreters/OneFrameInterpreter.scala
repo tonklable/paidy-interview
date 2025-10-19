@@ -15,6 +15,7 @@ import org.http4s.circe.jsonOf
 import cats.implicits.catsSyntaxApplicativeError
 import cats.data.EitherT
 import RateUtils.toRate
+import forex.services.rates.errors.Error.OneFrameLookupFailed
 
 class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends ApiAlgebra[F] {
 
@@ -28,7 +29,7 @@ class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig)
       uri <- EitherT.fromEither[F](
               OneFrameInterpreter
                 .buildUri(config.url, allPairs)
-                .leftMap(e => Error.OneFrameLookupFailed(s"Invalid URI: ${e.details}"): Error)
+                .leftMap(e => OneFrameLookupFailed(s"Invalid URI: ${e.details}"): Error)
             )
 
       request = OneFrameInterpreter.buildRequest[F](uri, config.token)
@@ -36,7 +37,7 @@ class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig)
       jsonRates <- client
                     .expect[List[RateJson]](request)
                     .attemptT
-                    .leftMap(e => Error.OneFrameLookupFailed(s"API failed: ${e.getMessage}"): Error)
+                    .leftMap(e => OneFrameLookupFailed(s"API failed: ${e.getMessage}"): Error)
 
       rates = jsonRates.flatMap(toRate)
 

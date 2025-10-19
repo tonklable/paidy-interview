@@ -139,43 +139,58 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
 
       val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
 
-      result shouldBe None
+      result.isLeft shouldBe true
+      result match {
+        case Left(err) =>
+          err shouldBe SystemError(s"Cannot compute rate for ${Rate.Pair(Currency.USD, Currency.EUR)}: zero price in rates")
+        case Right(_) =>
+          fail("Expected Left but got Right")
+      }
     }
 
     "return correct rate for USDEUR" in {
       val pair = Rate.Pair(Currency.USD, Currency.EUR)
       val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
 
+      result.isRight shouldBe true
+
+      val rate = result.toOption.get
       val expectedPrice = usdEur.price
-      result.get.price shouldBe expectedPrice
-      result.get.pair shouldBe pair
+      rate.price shouldBe expectedPrice
+      rate.pair shouldBe pair
     }
     "return correct rate for JPYEUR" in {
       val pair = Rate.Pair(Currency.JPY, Currency.EUR)
       val result = RateServiceImpl.findOrDivideRate(allRates, pair)
-      result should not be empty
 
+      result.isRight shouldBe true
+
+      val rate = result.toOption.get
       val expectedPrice = usdEur.price / usdJpy.price
-      result.get.price shouldBe expectedPrice
-      result.get.pair shouldBe pair
+      rate.price shouldBe expectedPrice
+      rate.pair shouldBe pair
     }
     "return correct rate for EURUSD" in {
       val pair = Rate.Pair(Currency.EUR, Currency.USD)
       val result = RateServiceImpl.findOrDivideRate(allRates, pair)
-      result should not be empty
 
+      result.isRight shouldBe true
+
+      val rate = result.toOption.get
       val expectedPrice = Price(BigDecimal(1)) / usdEur.price
-      result.get.price shouldBe expectedPrice
-      result.get.pair shouldBe pair
+      rate.price shouldBe expectedPrice
+      rate.pair shouldBe pair
     }
     "return correct rate for JPYJPY (same currency)" in {
       val pair = Rate.Pair(Currency.JPY, Currency.JPY)
       val result = RateServiceImpl.findOrDivideRate(allRates, pair)
-      result should not be empty
 
+      result.isRight shouldBe true
+
+      val rate = result.toOption.get
       val expectedPrice = Price(1.0000)
-      result.get.price shouldBe expectedPrice
-      result.get.pair shouldBe pair
+      rate.price shouldBe expectedPrice
+      rate.pair shouldBe pair
     }
   }
 }
