@@ -3,7 +3,7 @@ package forex.domain
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class RateCalculationTest extends AnyWordSpec with Matchers {
+class PriceTest extends AnyWordSpec with Matchers {
   "RateCalculation" should {
     "calculate normal rate correctly" when {
       "rounding down" in {

@@ -37,7 +37,8 @@ class RateServiceImpl[F[_]: Monad](
 }
 
 object RateServiceImpl {
-  def findOrDivideRate(rates: List[Rate], pair: Rate.Pair): Option[Rate] =
+  def findOrDivideRate(rates: List[Rate], pair: Rate.Pair): Option[Rate] = {
+    if (rates.exists(_.price.value == 0.0)) return None
     (pair.from, pair.to) match {
       case (f, t) if f == t =>
         Some(Rate(pair, Price(1.0000) / Price(1.0000), Timestamp.now))
@@ -51,4 +52,5 @@ object RateServiceImpl {
           usdToTo <- rates.find(_.pair == Rate.Pair(Currency.USD, pair.to))
         } yield Rate(pair, usdToTo.price / usdToFrom.price, Timestamp.now)
     }
+  }
 }

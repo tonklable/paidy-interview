@@ -132,6 +132,16 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
     val usdJpy = Rate(Rate.Pair(Currency.USD, Currency.JPY), Price(BigDecimal(150.0)), now)
     val allRates = List(usdEur, usdJpy)
 
+    "return None if detecting 0 rates" in {
+      val usdEur = Rate(Rate.Pair(Currency.USD, Currency.EUR), Price(BigDecimal(0)), now)
+      val usdJpy = Rate(Rate.Pair(Currency.USD, Currency.JPY), Price(BigDecimal(150.0)), now)
+      val allRates = List(usdEur, usdJpy)
+
+      val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
+
+      result shouldBe None
+    }
+
     "return correct rate for USDEUR" in {
       val pair = Rate.Pair(Currency.USD, Currency.EUR)
       val result = RateServiceImpl.findOrDivideRate(allRates, Rate.Pair(Currency.USD, Currency.EUR))
