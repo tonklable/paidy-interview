@@ -13,9 +13,8 @@ import org.typelevel.ci.CIString
 import org.http4s.EntityDecoder
 import org.http4s.circe.jsonOf
 import cats.implicits.catsSyntaxApplicativeError
-import cats.data.EitherT
 import RateUtils.toRate
-import forex.services.rates.errors.Error.OneFrameLookupFailed
+import forex.services.rates.errors.Error.{ OneFrameLookupFailed, SystemError }
 
 class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig) extends ApiAlgebra[F] {
 
@@ -25,23 +24,16 @@ class OneFrameInterpreter[F[_]: Sync](client: Client[F], config: OneFrameConfig)
 
   override def getAll: F[Either[Error, List[Rate]]] = {
     val allPairs = OneFrameInterpreter.buildAllPairs(Currency.all)
-    (for {
-      uri <- EitherT.fromEither[F](
-              OneFrameInterpreter
-                .buildUri(config.url, allPairs)
-                .leftMap(e => OneFrameLookupFailed(s"Invalid URI: ${e.details}"): Error)
-            )
-
-      request = OneFrameInterpreter.buildRequest[F](uri, config.token)
-
-      jsonRates <- client
-                    .expect[List[RateJson]](request)
-                    .attemptT
-                    .leftMap(e => OneFrameLookupFailed(s"API failed: ${e.getMessage}"): Error)
-
-      rates = jsonRates.flatMap(toRate)
-
-    } yield rates).value
+    OneFrameInterpreter.buildUri(config.url, allPairs) match {
+      case Left(error) => (SystemError(s"Invalid URI: ${error.details}"): Error).asLeft[List[Rate]].pure[F]
+      case Right(uri) =>
+        val request = OneFrameInterpreter.buildRequest[F](uri, config.token)
+        client.expect[List[RateJson]](request).attempt.flatMap {
+          case Left(error) =>
+            (OneFrameLookupFailed(s"API failed: ${error.getMessage}"): Error).asLeft[List[Rate]].pure[F]
+          case Right(jsonRates) => jsonRates.flatMap(toRate).asRight[Error].pure[F]
+        }
+    }
   }
 }
 
