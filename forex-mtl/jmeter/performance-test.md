@@ -58,11 +58,12 @@
 6. Test after reconnecting to One-Frame API with 8 concurrency:
     - 3 successful requests with 3 calls to One-Frame API (Confirmed by One-Frame API logs)
 
-    ![alt text](img/image-13.png)
+    ![alt text](img/image-14.png)
+    
 
     - 5 429 Too Many Requests errors (Same as 1.)
     
-    ![alt text](img/image-14.png)
+    ![alt text](img/image-13.png)
 
     
 
