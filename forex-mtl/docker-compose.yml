@@ -1,0 +1,36 @@
+services:
+  one-frame:
+    image: paidyinc/one-frame
+    container_name: one-frame
+    ports:
+      - "8080:8080"
+    networks:
+      - forex
+
+  redis-forex:
+    image: redis:7-alpine
+    container_name: redis-forex
+    ports:
+      - "6379:6379"
+    networks:
+      - forex
+
+  forex-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forex
+    depends_on:
+      - one-frame
+      - redis-forex
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    networks:
+      - forex
+    command: sbt run
+
+networks:
+  forex:
+    driver: bridge
