@@ -26,7 +26,7 @@ class RateServiceImpl[F[_]: Sync](
           if (passed)
             api.getAll.flatMap {
               case Right(rates) =>
-                cache.store(rates) >> guard.release >>
+                guard.release >> cache.store(rates) >>
                   Sync[F].delay(Timestamp.now).map(findOrDivideRate(rates, pair, _))
               case Left(error) => guard.release >> error.asLeft[Rate].pure[F]
             } else
