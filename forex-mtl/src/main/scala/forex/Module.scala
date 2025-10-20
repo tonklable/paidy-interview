@@ -1,5 +1,6 @@
 package forex
 
+import cats.effect.concurrent.Semaphore
 import cats.effect.{ Concurrent, Timer }
 import forex.config.ApplicationConfig
 import forex.http.auth.TokenAuth
@@ -17,7 +18,8 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 class Module[F[_]: Concurrent: Timer](
     config: ApplicationConfig,
     httpClient: Client[F],
-    redisClient: RedisClient[F]
+    redisClient: RedisClient[F],
+    guard: Semaphore[F]
 ) {
 
   private val logger: Logger[F] = Slf4jLogger.getLogger[F]
@@ -26,7 +28,7 @@ class Module[F[_]: Concurrent: Timer](
 
   private val oneFrameService: OneFrameService[F] = OneFrameService.oneFrame[F](httpClient, config.oneFrame)
 
-  private val ratesService: RatesService[F] = RatesServices.cached[F](redisService, oneFrameService)
+  private val ratesService: RatesService[F] = RatesServices.cached[F](redisService, oneFrameService, guard)
 
   private val ratesProgram: RatesProgram[F] = RatesProgram[F](ratesService)
 

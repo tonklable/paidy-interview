@@ -2,6 +2,7 @@ package forex
 
 import scala.concurrent.ExecutionContext
 import cats.effect._
+import cats.effect.concurrent.Semaphore
 import forex.config._
 import forex.services.rates.interpreters.RedisClient
 import fs2.Stream
@@ -22,7 +23,8 @@ class Application[F[_]: ConcurrentEffect: Timer: ContextShift] {
       config <- Config.stream("app")
       httpClient <- Stream.resource(EmberClientBuilder.default[F].withTimeout(config.oneFrame.timeout).build)
       redisClient <- Stream.resource(RedisClient.make[F](config.redis.url))
-      module = new Module[F](config, httpClient, redisClient)
+      semaphore <- Stream.eval(Semaphore[F](3))
+      module = new Module[F](config, httpClient, redisClient, semaphore)
       _ <- BlazeServerBuilder[F](ec)
             .bindHttp(config.http.port, config.http.host)
             .withHttpApp(module.httpApp)

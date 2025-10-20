@@ -1,11 +1,12 @@
 package forex.services.rates.interpreters
 
 import cats.effect.IO
+import cats.effect.concurrent.Semaphore
 import cats.implicits.catsSyntaxEitherId
-import forex.domain.{Currency, Price, Rate, Timestamp}
+import forex.domain._
 import forex.services.rates.RedisAlgebra
 import forex.services.rates.ApiAlgebra
-import forex.services.rates.errors.Error.{OneFrameLookupFailed, SystemError}
+import forex.services.rates.errors.Error._
 import org.mockito.Mockito.{never, times, verify, when}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -36,6 +37,18 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
   val testAllRates = List(testRate,testRate2)
   val testRedisError: Error = SystemError("Redis failure")
   val testOneFrameError: Error = OneFrameLookupFailed("OneFrame API failure")
+  val testOneFrameBusy: Error = OneFrameBusy("Too many concurrent requests")
+  val mockGuard: Semaphore[IO] = new Semaphore[IO] {
+    override def withPermit[A](t: IO[A]): IO[A] = t
+    override def tryAcquire: IO[Boolean] = IO.pure(true)
+    override def release: IO[Unit] = IO.unit
+    override def acquire: IO[Unit] = IO.unit
+    override def available: IO[Long] = IO.pure(1L)
+    override def count: IO[Long] = IO.pure(1L)
+    override def acquireN(n: Long): IO[Unit] = IO.unit
+    override def tryAcquireN(n: Long): IO[Boolean] = IO.pure(true)
+    override def releaseN(n: Long): IO[Unit] = IO.unit
+  }
 
   "RateServiceImpl.get" should {
     "return rate from cache" when {
@@ -45,7 +58,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
 
         when(mockCache.getAll).thenReturn(IO.pure(testAllRates.asRight))
 
-        val service = new RateServiceImpl[IO](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi, mockGuard)
 
         val resultIO = service.get(testPair)
         val result = resultIO.unsafeRunSync()
@@ -69,7 +82,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
         when(mockApi.getAll).thenReturn(IO.pure(testAllRates.asRight))
         when(mockCache.store(any[List[Rate]]())).thenReturn(IO.unit)
 
-        val service = new RateServiceImpl[IO](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi, mockGuard)
 
         val resultIO = service.get(testPair)
         val result = resultIO.unsafeRunSync()
@@ -94,7 +107,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
         when(mockApi.getAll).thenReturn(IO.pure(testAllRates.asRight))
         when(mockCache.store(any[List[Rate]]())).thenReturn(IO.unit)
 
-        val service = new RateServiceImpl[IO](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi, mockGuard)
 
         val resultIO = service.get(testPair3)
         val result = resultIO.unsafeRunSync()
@@ -118,7 +131,7 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
         when(mockCache.getAll).thenReturn(IO.pure(testRedisError.asLeft))
         when(mockApi.getAll).thenReturn(IO.pure(testOneFrameError.asLeft))
 
-        val service = new RateServiceImpl[IO](mockCache,mockApi)
+        val service = new RateServiceImpl[IO](mockCache,mockApi, mockGuard)
 
         val resultIO = service.get(testPair)
         val result = resultIO.unsafeRunSync()
@@ -126,6 +139,33 @@ class RateServiceImplTest extends AnyWordSpec with Matchers with MockitoSugar {
         result shouldBe testOneFrameError.asLeft
         verify(mockCache, times(1)).getAll
         verify(mockApi, times(1)).getAll
+        verify(mockCache, never()).store(testAllRates)
+      }
+      "too many concurrent requests" in {
+        val mockCache = mock[RedisAlgebra[IO]]
+        val mockApi = mock[ApiAlgebra[IO]]
+        val mockGuardReject: Semaphore[IO] = new Semaphore[IO] {
+          override def withPermit[A](t: IO[A]): IO[A] = t
+          override def tryAcquire: IO[Boolean] = IO.pure(false)
+          override def release: IO[Unit] = IO.unit
+          override def acquire: IO[Unit] = IO.unit
+          override def available: IO[Long] = IO.pure(1L)
+          override def count: IO[Long] = IO.pure(1L)
+          override def acquireN(n: Long): IO[Unit] = IO.unit
+          override def tryAcquireN(n: Long): IO[Boolean] = IO.pure(false)
+          override def releaseN(n: Long): IO[Unit] = IO.unit
+        }
+
+        when(mockCache.getAll).thenReturn(IO.pure(testRedisError.asLeft))
+
+        val service = new RateServiceImpl[IO](mockCache,mockApi, mockGuardReject)
+
+        val resultIO = service.get(testPair)
+        val result = resultIO.unsafeRunSync()
+
+        result shouldBe testOneFrameBusy.asLeft
+        verify(mockCache, times(1)).getAll
+        verify(mockApi, never()).getAll
         verify(mockCache, never()).store(testAllRates)
       }
     }

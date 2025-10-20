@@ -10,20 +10,27 @@ import forex.domain._
 import RateServiceImpl.findOrDivideRate
 import cats.implicits._
 import cats.effect.Sync
+import cats.effect.concurrent.Semaphore
 
 class RateServiceImpl[F[_]: Sync](
     cache: RedisAlgebra[F],
-    api: ApiAlgebra[F]
+    api: ApiAlgebra[F],
+    guard: Semaphore[F]
 ) extends Algebra[F] {
 
   override def get(pair: Rate.Pair): F[Error Either Rate] =
     cache.getAll.flatMap {
       case Right(rates) => Sync[F].delay(Timestamp.now).map(findOrDivideRate(rates, pair, _))
       case Left(_) =>
-        api.getAll.flatMap {
-          case Right(rates) =>
-            cache.store(rates).flatMap(_ => Sync[F].delay(Timestamp.now).map(findOrDivideRate(rates, pair, _)))
-          case Left(error) => error.asLeft[Rate].pure[F]
+        guard.tryAcquire.flatMap { passed =>
+          if (passed)
+            api.getAll.flatMap {
+              case Right(rates) =>
+                cache.store(rates).flatMap(_ => Sync[F].delay(Timestamp.now).map(findOrDivideRate(rates, pair, _)))
+              case Left(error) => error.asLeft[Rate].pure[F]
+            } else
+            (OneFrameBusy(s"Too many concurrent requests"): Error).asLeft[Rate].pure[F]
+
         }
     }
 }

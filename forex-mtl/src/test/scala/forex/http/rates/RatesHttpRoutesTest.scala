@@ -4,7 +4,7 @@ import cats.effect.IO
 import forex.domain.{Currency, Price, Rate, Timestamp}
 import forex.programs.RatesProgram
 import forex.programs.rates.Protocol.GetRatesRequest
-import forex.programs.rates.errors.Error
+import forex.programs.rates.errors.Error._
 import org.http4s._
 import org.http4s.implicits._
 import org.scalatest.matchers.should.Matchers
@@ -13,6 +13,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 import io.circe.parser._
+import org.http4s.Status._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -52,7 +53,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       val mockProgram = mock[RatesProgram[IO]]
 
       when(mockProgram.get(any[GetRatesRequest]()))
-        .thenReturn(IO.pure(Left(Error.SystemError("Data parsing failed"))))
+        .thenReturn(IO.pure(Left(SystemError("Data parsing failed"))))
 
       val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
@@ -63,7 +64,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
 
       val response = routes.orNotFound.run(request).unsafeRunSync()
 
-      response.status shouldBe Status.InternalServerError
+      response.status shouldBe InternalServerError
 
       val body = response.as[String].unsafeRunSync()
       val json = parse(body).getOrElse(fail("Invalid JSON"))
@@ -77,7 +78,7 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
       val mockProgram = mock[RatesProgram[IO]]
 
       when(mockProgram.get(any[GetRatesRequest]()))
-        .thenReturn(IO.pure(Left(Error.RateLookupFailed("OneFrame API is down"))))
+        .thenReturn(IO.pure(Left(RateLookupFailed("OneFrame API is down"))))
 
       val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
 
@@ -88,13 +89,39 @@ class RatesHttpRoutesTest extends AnyWordSpec with Matchers with MockitoSugar {
 
       val response = routes.orNotFound.run(request).unsafeRunSync()
 
-      response.status shouldBe Status.ServiceUnavailable
+      response.status shouldBe ServiceUnavailable
 
       val body = response.as[String].unsafeRunSync()
       val json = parse(body).getOrElse(fail("Invalid JSON"))
 
       (json \\ "error").head.asString shouldBe Some(
         "Unable to reach external rate service. Please try again later."
+      )
+    }
+
+
+    "return 429 Too Many Requests when RateLookupFailed occurs" in {
+      val mockProgram = mock[RatesProgram[IO]]
+
+      when(mockProgram.get(any[GetRatesRequest]()))
+        .thenReturn(IO.pure(Left(ServiceBusy("OneFrame API is down"))))
+
+      val routes = new RatesHttpRoutes[IO](mockProgram, logger).routes
+
+      val request = Request[IO](
+        method = Method.GET,
+        uri = uri"/rates?from=USD&to=EUR"
+      )
+
+      val response = routes.orNotFound.run(request).unsafeRunSync()
+
+      response.status shouldBe TooManyRequests
+
+      val body = response.as[String].unsafeRunSync()
+      val json = parse(body).getOrElse(fail("Invalid JSON"))
+
+      (json \\ "error").head.asString shouldBe Some(
+        "Too many concurrent requests. Please try again later."
       )
     }
 

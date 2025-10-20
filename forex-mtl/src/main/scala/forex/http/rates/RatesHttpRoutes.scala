@@ -4,8 +4,8 @@ package rates
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import forex.programs.RatesProgram
-import forex.programs.rates.errors.Error.{ RateLookupFailed, SystemError }
-import forex.programs.rates.{ Protocol => RatesProgramProtocol }
+import forex.programs.rates.errors.Error.{RateLookupFailed, ServiceBusy, SystemError}
+import forex.programs.rates.{Protocol => RatesProgramProtocol}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router
@@ -30,13 +30,18 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F], logger: Logger[F]) ext
                 ServiceUnavailable(
                   "Unable to reach external rate service. Please try again later.".asGetApiErrorResponse
                 )
+            case ServiceBusy(e) =>
+              logger.error(e) >>
+                TooManyRequests(
+                  "Too many concurrent requests. Please try again later.".asGetApiErrorResponse
+                )
           }
         case Right(rate) =>
           Ok(rate.asGetApiResponse)
       }
     case GET -> Root :? _ =>
       logger.error("Currency is out of scope or not sufficient") >>
-      BadRequest("Invalid request. Please provide both currencies in scope.".asGetApiErrorResponse)
+        BadRequest("Invalid request. Please provide both currencies in scope.".asGetApiErrorResponse)
   }
 
   val routes: HttpRoutes[F] = Router(
