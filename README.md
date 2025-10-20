@@ -1,50 +1,181 @@
-<img src="/paidy.png?raw=true" width=300 style="background-color:white;">
+# Paidy Take-Home Coding Exercises (Forex)
 
-# Paidy Take-Home Coding Exercises
+## 💱 Exchange Rate API
 
-## What to expect?
-We understand that your time is valuable, and in anyone's busy schedule solving these exercises may constitute a fairly substantial chunk of time, so we really appreciate any effort you put in to helping us build a solid team.
+### `GET /rates`
 
-## What we are looking for?
-**Keep it simple**. Read the requirements and restrictions carefully and focus on solving the problem.
+Fetches the latest exchange rate between two currencies.
 
-**Treat it like production code**. That is, develop your software in the same way that you would for any code that is intended to be deployed to production. These may be toy exercises, but we really would like to get an idea of how you build code on a day-to-day basis.
+**Example Request:**
+```bash
+curl -H "token: your-auth-token" "http://localhost:8081/rates?from=JPY&to=USD"
+```
+Remark: `your-auth-token` can be set in the configuration file `.env`
 
-## How to submit?
-Please upload your solution to a version control system hosting service, preferably [Github](https://www.github.com) or [Gitlab](https://www.gitlab.com), that allows code viewing and checkout without requiring an account. Afterward, email us a link to the branch that contains your solution. Make sure your submission includes a small **README**, documenting any assumptions, simplifications and/or choices you made, as well as a short description of how to run the code and/or tests. Finally, to help us review your code, please split your commit history in sensible chunks (at least separate the initial provided code from your personal additions).
+**Example Successful Response (200 OK):**
+```json
+{
+  "from": "EUR",
+  "to": "THB",
+  "price": 39.5721,
+  "timestamp": "2025-10-18T14:22:15Z"
+}
+```
 
-## The Interview:
-After you submit your code, we will contact you to discuss and potentially arrange an in-person interview with some of the team.
-The interview will cover a wide range of technical and social aspects relevant to working at Paidy, but importantly for this exercise: we will also take the opportunity to step through your submitted code with you.
+**Example Error Response (400 Bad Request):**
+```json
+{
+  "error": "Invalid request. Please provide both currencies in scope."
+}
+```
 
-## The Exercises:
-### 1. [Platform] Build an API for managing users
-The complete specification for this exercise can be found in the [UsersAPI.md](UsersAPI.md).
+### Setup
 
-### 2. [Frontend] Build a SPA that displays currency exchange rates
-The complete specification for this exercise can be found in the [Forex-UI.md](Forex-UI.md).
+#### Option 1: Run natively on your machine
 
-### 3. [Platform] Build a local proxy for currency exchange rates
-The complete specification for this exercise can be found in the [Forex.md](Forex.md).
+1. Start One-Frame API
+```bash
+docker run -p 8080:8080 paidyinc/one-frame
+```
+2. Start Redis
+```bash
+docker run -d --name redis-forex -p 6379:6379 redis:7-alpine
+```
+3. Navigate to the forex-mtl folder
+```bash
+cd forex-mtl
+```
+4. Configure environment variables
+- Copy the template `.env.example` to `.env`
+```bash
+cp .env.example .env
+```
+- Edit values in `.env`
+```
+ONEFRAME_TOKEN=your-oneframe-token
+ONEFRAME_URL=http://localhost:8080/rates
+REDIS_URL=redis://localhost:6379
+AUTH_TOKEN=your-auth-token
+```
+5. Start Forex Application
+```bash
+sbt run
+```
 
-### 4. [Platform] Build an API for managing a restaurant
-The complete specification for this exercise can be found at [SimpleRestaurantApi.md](SimpleRestaurantApi.md)
+#### Option 2: Run inside Docker containers
 
-### 5. [Technical Product Manager] Choose an address validation provider and write the project requirements
-The complete specification for this exercise can be found at [AddressValidation.md](./AddressValidation.md)
+1. Navigate to the forex-mtl folder
+```bash
+cd forex-mtl
+```
+2. Configure environment variables
+- Copy the template `.env.example` to `.env`
+```bash
+cp .env.example .env
+```
+- Edit values in `.env`
+```
+ONEFRAME_TOKEN=your-oneframe-token
+ONEFRAME_URL=http://one-frame:8080/rates
+REDIS_URL=redis://redis-forex:6379
+AUTH_TOKEN=your-auth-token
+```
+3. Start application with Docker Compose
+```bash
+docker compose up --build
+```
 
-## F.A.Q.
-1) _Should I work on all exercises ?_
-*NO*, the hiring manager will ask you to work on a single exercise and will link you directly to that exercise's readme file. If you are unsure about which exercise to work on, then please contact Paidy's talent acquisition team.
 
-2) _Is it OK to share your solutions publicly?_
-Yes, the questions are not prescriptive, the process and discussion around the code is the valuable part. You do the work, you own the code. Given we are asking you to give up your time, it is entirely reasonable for you to keep and use your solution as you see fit.
+## Functional Requirements (Assumptions Included)
+> The service returns an exchange rate when provided with 2 supported currencies
+1. Users can **call the endpoint `/rates`** with `from` and `to` to receive an exchange rate.
+2. Users receive a **rounded** exchange rate with **4 decimal digits if the rate is greater than or equal to 0.1000** or **4 significant digits if the rate is less than 0.1000**.
+3. Users receive an exchange rate only for currencies in scope (see **Appendix** for Currencies in Scope).
+4. All exchange rates are equally available to users; **no currency pair has higher priority or peak usage.**
+> The rate should not be older than 5 minutes.
+5. The rate should **not be older than 5 minutes**.
+> The service should support at least 10,000 successful requests per day **with 1 API token**.
 
-3) _Should I do X?_
-For any value of X, it is up to you, we intentionally leave the problem a little open-ended and will leave it up to you to provide us with what you see as important. Just remember to keep it simple. If it's a feature that is going to take you a couple of days, it's not essential.
+6. The service **verifies the user token** and returns a successful response only for requests with a verified token.
+7. The service returns the error message and HTTP status code for the corresponding error cases (see **Appendix** for Error Responses).
 
-4) _Something is ambiguous, and I don't know what to do?_
-The first thing is: don't get stuck. We really don't want to trip you up intentionally, we are just attempting to see how you approach problems. That said, there are intentional ambiguities in the specifications, mainly to see how you fill in those gaps, and how you make design choices.
-If you really feel stuck, our first preference is for you to make a decision and document it with your submission - in this case there is really no wrong answer. If you feel it is not possible to do this, just send us an email and we will try to clarify or correct the question for you.
+## Non-functional Requirements (Assumptions Included)
+1. Users can receive a response in real time with **latency less than 500 ms** when testing locally. We assume that all users are in Japan.
+> The service should support **at least 10,000 successful requests per day** with 1 API token.
+2. The service supports **at least 10,000 successful requests per day**.
+3. The service can call **One-Frame API only 1000 times** per day. There is no limitation on the request length or response size of the One-Frame API.
+4. The service has **unit tests** for successful cases (for an exchange rate greater than and less than 0.1) and error cases.
+5. The service should be able to handle **a maximum of 3 requests concurrently** (under 6 QPS). The service does not call One-Frame API more than 3 reqeuests concurrently.
 
-Good luck!
+## Sequence Diagram
+
+![Sequence Diagram](sequence-diagram.png)
+
+## Implementation Details
+1. Forex-mtl fetches URLs, configurations, user token, and One-Frame token from .env at startup.
+2. When receiving a request, forex-mtl verifies the user token. Forex-mtl returns `401 Unauthorized error` if the token is not verified or does not exist.
+3. Forex-mtl verifies the request. The `from` and `to` parameters must be present, and both currencies should be in scope. If not, it returns `400 Bad Request`.
+4. Forex-mtl implements caching with Redis, refreshing every 300 seconds.
+5. When there is no cache in Redis:  
+    * Forex-mtl calls the One-Frame API with 165 pairs to get all currencies against USD.
+    * If forex-mtl cannot call the One-Frame API within 300 ms, it returns `503 Service Unavailable`.
+    * Then, forex-mtl sets the cache in Redis with the key `rates` and the value for the response.
+    * Concurrent updates for Redis are acceptable, and only the last update is saved ("last write wins").
+    * Remark: Estimated response size ≈ 23 KB.
+6. When there is a cache in Redis:
+    * Forex-mtl gets all currency rates against USD from Redis.
+7. Forex-mtl calculates exchange rates.  
+For example, `USD to JPY = R1`, `USD to EUR = R2`, it calculates using the following formula:
+    ```math
+    \text{JPY} → \text{EUR}=\frac{R2}{R1}​
+    ```
+    * If the value is greater than or equal to 0.1000, round the value to 4 decimal digits.
+    * If the value is less than 0.1000, round the value to 4 significant digits.
+8. Forex-mtl returns an exchange rate to user with a timestamp.
+
+---
+
+## Appendix
+### Currencies in Scope*
+AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, BMD, BND, BOB, BRL, BSD, BTN, BWP, BYN, BZD, CAD, CDF, CHF, CLP, CNY, COP, CRC, CUC, CUP, CVE, CZK, DJF, DKK, DOP, DZD, EGP, ERN, ETB, EUR, FJD, FKP, GBP, GEL, GGP, GHS, GIP, GMD, GNF, GTQ, GYD, HKD, HNL, HRK, HTG, HUF, IDR, ILS, IMP, INR, IQD, IRR, ISK, JEP, JMD, JOD, JPY, KES, KGS, KHR, KMF, KPW, KRW, KWD, KYD, KZT, LAK, LBP, LKR, LRD, LSL, LYD, MAD, MDL, MGA, MKD, MMK, MNT, MOP, MRU, MUR, MVR, MWK, MXN, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PGK, PHP, PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SBD, SCR, SDG, SEK, SGD, SHP, SLL, SOS, SPL, SRD, STN, SVC, SYP, SZL, THB, TJS, TMT, TND, TOP, TRY, TTD, TVD, TWD, TZS, UAH, UGX, USD, UYU, UZS, VEF, VND, VUV, WST, XAF, XCD, XDR, XOF, XPF, YER, ZAR, ZMW, ZWD
+
+*Same as One-Frame API.
+
+### Error Responses
+| Error case | HTTP status code | Message |
+|---|---|---|
+| Token not provided or token verification failed | 401 Unauthorized | Token verification failed. Please provide the correct token. |
+| Invalid request, insufficient parameters, or currency out of scope | 400 Bad Request | Invalid request. Please provide both currencies in scope. |
+| Unable to connect to the One-Frame Service when there is no saved data | 503 Service Unavailable | Unable to reach external rate service. Please try again later. |
+| Concurrency already exceeds 3 to call One-Frame Service | Too Many Requests | Too many concurrent requests. Please try again later. |
+| Other unexpected errors while processing requests | 500 Internal Server Error | Internal error. Please contact the developer. |
+
+### Manual Test
+
+Manual test has been performed. Please refer to [manual-test.md](manual-test.md).
+
+### Performance Test
+
+Performance test has been performed. Please refer to [performance-test.md](forex-mtl/jmeter/performance-test.md)
+
+### QPS calculation
+#### Maximum times of cache clearing per day (every 5 minutes)
+```math
+\frac{\text{seconds in one day}}{\text{seconds to clear cache}} = \frac{86400\ \text{seconds}}{300\ \text{seconds per time}} = 288\ \text{times}
+```
+Redis clears cache every 5 minutes. There are maximum 288 times for the service to call One-Frame API, if Redis is not down.
+#### Maximum concurrency to call Once Frame API 
+
+```math
+\frac{\text{One Frame API limit}}{\text{Times to call API}} = \frac{1000\ \text{requests}}{288\ \text{times}} ≈  3\ \text{requests per time}
+```
+
+Service can receive **maximum 3 requests concurrently**
+#### Maximum QPS
+
+```math
+\text{QPS} = \frac{\text{Concurrency}}{\text{Latency}} = \frac{3}{0.5\ \text{second}} = 6
+```
+
+Service can receive **maximum 6 QPS**
+If actual latency is lower than 500 ms, **QPS will proportionally increase.**
