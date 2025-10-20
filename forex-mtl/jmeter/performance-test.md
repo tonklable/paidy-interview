@@ -17,20 +17,33 @@
 1. Test at startup with 8 concurrency:
     - 3 successful requests with 3 calls to One-Frame API (Confirmed by One-Frame API logs)
     - 5 429 Too Many Requests Errors
+    
     ![alt text](img/image-2.png)
+   
     - The 3 successful requests got all 3 different values
+    
     ![alt text](img/image-7.png)
+    
     ![alt text](img/image-8.png)
+    
     ![alt text](img/image-9.png)
-2. Test hitting cache with 8 concurrency:
+    
+3. Test hitting cache with 8 concurrency:
     - 8 successful requests with the same value as the last successful request from 1. without calling One-Frame API (Confirmed by One-Frame API logs)
+    
     ![alt text](img/image-10.png)
-3. Test missing cache with 8 concurrency:
+    
+4. Test missing cache with 8 concurrency:
     - 8 successful requests with 2 calls to One-Frame API (Confirmed by One-Frame API logs)
+    
     ![alt text](img/image-4.png)
+    
     - 1st request got value 1.0083 (aligned with One-Frame API 1st request)
+    
     ![alt text](img/image-5.png)
+   
     - 2nd–8th requests got value 1.0138 (aligned with One-Frame API 2nd request)
+    
     ![alt text](img/image-6.png)
 
 ## Discussion
