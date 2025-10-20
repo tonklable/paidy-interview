@@ -31,6 +31,8 @@ Remark: `your-auth-token` can be set in the configuration file `.env`
 
 ### Setup
 
+#### Option 1: Run natively on your machine
+
 1. Start One-Frame API
 ```bash
 docker run -p 8080:8080 paidyinc/one-frame
@@ -48,7 +50,7 @@ cd forex-mtl
 ```bash
 cp .env.example .env
 ```
-- Fill in the actual values in `.env`
+- Edit values in `.env`
 ```
 ONEFRAME_TOKEN=your-oneframe-token
 ONEFRAME_URL=http://localhost:8080/rates
@@ -59,6 +61,30 @@ AUTH_TOKEN=your-auth-token
 ```bash
 sbt run
 ```
+
+#### Option 2: Run inside Docker containers
+
+1. Navigate to the forex-mtl folder
+```bash
+cd forex-mtl
+```
+2. Configure environment variables
+- Copy the template `.env.example` to `.env`
+```bash
+cp .env.example .env
+```
+- Edit values in `.env`
+```
+ONEFRAME_TOKEN=your-oneframe-token
+ONEFRAME_URL=http://one-frame:8080/rates
+REDIS_URL=redis://redis-forex:6379
+AUTH_TOKEN=your-auth-token
+```
+3. Start application with Docker Compose
+```bash
+docker compose up --build
+```
+
 
 ## Functional Requirements (Assumptions Included)
 > The service returns an exchange rate when provided with 2 supported currencies
