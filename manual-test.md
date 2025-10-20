@@ -28,6 +28,7 @@ token: 9cf9107f6fb44c97b77496c691fd4e7b
 ```
 
 **Actual Response / Proof:**
+
 ![alt text](test-img/test-1.png)
 
 ---
@@ -58,6 +59,7 @@ token: 9cf9107f6fb44c97b77496c691fd4e7b
 ```
 
 **Actual Response / Proof:**
+
 ![alt text](test-img/test-2.png)
 
 ---
@@ -85,6 +87,7 @@ token: invalid-token
 ```
 
 **Actual Response / Proof:**
+
 ![alt text](test-img/test-3.png)
 
 ---
@@ -112,6 +115,7 @@ token: 9cf9107f6fb44c97b77496c691fd4e7b
 ```
 
 **Actual Response / Proof:**
+
 ![alt text](test-img/test-4.png)
 
 ---
@@ -139,6 +143,7 @@ token: 9cf9107f6fb44c97b77496c691fd4e7b
 ```
 
 **Actual Response / Proof:**
+
 ![alt text](test-img/test-5.png)
 
 ---
@@ -166,5 +171,6 @@ token: 9cf9107f6fb44c97b77496c691fd4e7b
 ```
 
 **Actual Response / Proof:**
+
 ![alt text](test-img/test-6.png)
 ---
