@@ -105,7 +105,7 @@ docker compose up --build
 2. The service supports **at least 10,000 successful requests per day**.
 3. The service can call **One-Frame API only 1000 times** per day. There is no limitation on the request length or response size of the One-Frame API.
 4. The service has **unit tests** for successful cases (for an exchange rate greater than and less than 0.1) and error cases.
-5. The service should be able to handle **a maximum of 3 requests concurrently** (under 6 QPS).
+5. The service should be able to handle **a maximum of 3 requests concurrently** (under 6 QPS). The service does not call One-Frame API more than 3 reqeuests concurrently.
 
 ## Sequence Diagram
 
@@ -147,11 +147,16 @@ AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD, AWG, AZN, BAM, BBD, BDT, BGN, BHD, BIF, 
 | Token not provided or token verification failed | 401 Unauthorized | Token verification failed. Please provide the correct token. |
 | Invalid request, insufficient parameters, or currency out of scope | 400 Bad Request | Invalid request. Please provide both currencies in scope. |
 | Unable to connect to the One-Frame Service when there is no saved data | 503 Service Unavailable | Unable to reach external rate service. Please try again later. |
+| Concurrency already exceeds 3 to call One-Frame Service | Too Many Requests | Too many concurrent requests. Please try again later. |
 | Other unexpected errors while processing requests | 500 Internal Server Error | Internal error. Please contact the developer. |
 
 ### Manual Test
 
 Manual test has been performed. Please refer to [manual-test.md](manual-test.md).
+
+### Performance Test
+
+Performance test has been performed. Please refer to [performance-test.md](forex-mtl/jmeter/performance-test.md)
 
 ### QPS calculation
 #### Maximum times of cache clearing per day (every 5 minutes)
