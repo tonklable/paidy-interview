@@ -26,7 +26,8 @@ class RateServiceImpl[F[_]: Sync](
           if (passed)
             api.getAll.flatMap {
               case Right(rates) =>
-                cache.store(rates).flatMap(_ => Sync[F].delay(Timestamp.now).map(findOrDivideRate(rates, pair, _)))
+                cache.store(rates) >> guard.releaseN(3) >>
+                  Sync[F].delay(Timestamp.now).map(findOrDivideRate(rates, pair, _))
               case Left(error) => error.asLeft[Rate].pure[F]
             } else
             (OneFrameBusy(s"Too many concurrent requests"): Error).asLeft[Rate].pure[F]
