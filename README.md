@@ -8,7 +8,7 @@ Fetches the latest exchange rate between two currencies.
 
 **Example Request:**
 ```bash
-curl -H "token: your-auth-token" "http://localhost:8081/rates?from=JPY&to=USD"
+curl -H "token: your-auth-token" "http://localhost:8081/rates?from=EUR&to=THB"
 ```
 Remark: `your-auth-token` can be set in the configuration file `.env`
 
